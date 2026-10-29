@@ -3,1417 +3,1472 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>గ్రామ పంచాయతీ ఎన్నికలు & సంక్షేమ మేనేజ్‌మెంట్ సిస్టమ్</title>
-    <!-- Tailwind CSS CDN -->
+    <title>బూరగాం గ్రామ పంచాయతీ ఎన్నికల సర్వే</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Inter & Telugu Support -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Input Tools / Transliteration API -->
-    <script src="https://www.google.com/jsapi"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'Noto Sans Telugu', 'sans-serif'],
-                    },
                     colors: {
-                        tdpYellow: '#FFCC00',
-                        jsnRed: '#D32F2F',
-                        ycpBlue: '#1E88E5',
-                        neutralGray: '#78909C',
-                        coalitionGreen: '#2E7D32'
+                        goldTheme: {
+                            50: '#fffbeb',
+                            100: '#fef3c7',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            700: '#b45309',
+                            800: '#92400e',
+                        }
                     }
                 }
             }
         }
     </script>
+    <!-- Inter & Telugu supportive font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS for Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: 'Inter', 'Noto Sans Telugu', sans-serif; }
+        body { font-family: 'Inter', sans-serif; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 h-full flex flex-col">
+<body class="bg-gray-100 text-gray-900 h-full flex flex-col">
 
-    <!-- Top Header -->
-    <header class="bg-gradient-to-r from-amber-500 via-yellow-500 to-red-600 text-white shadow-md sticky top-0 z-30">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center">
-            <div class="flex items-center space-x-3 mb-2 md:mb-0">
-                <div class="bg-white text-red-600 p-2 rounded-xl shadow font-bold text-xl flex items-center justify-center w-12 h-12">
-                    <i class="fa-solid fa-scale-balanced"></i>
+    <!-- MAIN APP SHELL (Directly Open) -->
+    <div id="appShell" class="flex flex-col h-full overflow-hidden">
+        
+        <!-- TOP GOLD REFERENCE HEADER -->
+        <header class="bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-white shadow-md px-6 py-3.5 flex flex-col md:flex-row items-center justify-between flex-shrink-0 gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white text-amber-700 w-11 h-11 rounded-xl shadow font-bold text-xl flex items-center justify-center overflow-hidden border border-amber-300">
+                    <img src="https://i.pinimg.com/1200x/32/9f/36/329f36d7fc51c9768c863867120085fc.jpg" alt="Panchayat Logo" class="w-full h-full object-cover">
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-bold tracking-wide">బూరగాం గ్రామ పంచాయతీ ఎన్నికల సర్వే</h1>
+                    <h1 class="text-lg md:text-xl font-bold tracking-tight">బూరగాం గ్రామ పంచాయతీ ఎన్నికల సర్వే</h1>
+                    <span id="activeBoothBadge" class="text-xs text-amber-100 font-medium">గ్రామ పంచాయతీ సర్వే పోర్టల్</span>
                 </div>
             </div>
-            <div class="flex items-center space-x-2 flex-wrap">
-                <span id="sync-status-badge" class="bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow flex items-center mb-1 sm:mb-0">
-                    <i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> Google Sheet సింక్ ఆన్
-                </span>
-                <button onclick="openAddVoterModal()" class="bg-white text-red-700 hover:bg-yellow-50 px-4 py-2 rounded-lg font-bold text-sm shadow transition flex items-center">
-                    <i class="fa-solid fa-user-plus mr-2"></i> కొత్త ఓటరు చేర్చు
+
+            <!-- NAVIGATION TABS -->
+            <nav class="flex flex-wrap items-center gap-1 md:gap-2">
+                <button onclick="switchTab('dashboard')" class="nav-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition bg-white text-amber-800 shadow" data-target="dashboard">
+                    <i class="fa-solid fa-chart-pie mr-1.5"></i> డాష్‌బోర్డ్
                 </button>
-            </div>
-        </div>
-    </header>
+                <button onclick="switchTab('voters')" class="nav-btn px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition text-amber-100 hover:bg-amber-600" data-target="voters">
+                    <i class="fa-solid fa-users mr-1.5"></i> ఓటర్ల జాబితా
+                </button>
+                <button onclick="switchTab('families')" class="nav-btn px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition text-amber-100 hover:bg-amber-600" data-target="families">
+                    <i class="fa-solid fa-house-chimney-user mr-1.5"></i> కుటుంబ ప్రోఫార్మా
+                </button>
+                <button onclick="switchTab('welfare')" class="nav-btn px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition text-amber-100 hover:bg-amber-600" data-target="welfare">
+                    <i class="fa-solid fa-hand-holding-dollar mr-1.5"></i> సంక్షేమం & పెన్షన్లు
+                </button>
+                <button onclick="switchTab('migrated')" class="nav-btn px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition text-amber-100 hover:bg-amber-600" data-target="migrated">
+                    <i class="fa-solid fa-plane-departure mr-1.5"></i> ప్రవాస ఓటర్లు
+                </button>
+            </nav>
+        </header>
 
-    <!-- Navigation Tabs -->
-    <nav class="bg-white border-b border-gray-200 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 flex space-x-2 md:space-x-6 overflow-x-auto">
-            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="tab-btn py-3 px-4 border-b-2 font-semibold text-sm flex items-center space-x-2 transition whitespace-nowrap border-yellow-500 text-amber-600">
-                <i class="fa-solid fa-chart-pie"></i> <span>డ్యాష్‌బోర్డ్</span>
-            </button>
-            <button onclick="switchTab('voters')" id="nav-voters" class="tab-btn py-3 px-4 border-b-2 border-transparent font-medium text-sm text-gray-600 hover:text-amber-600 flex items-center space-x-2 transition whitespace-nowrap">
-                <i class="fa-solid fa-users"></i> <span>ఓటర్ల జాబితా</span>
-            </button>
-            <button onclick="switchTab('families')" id="nav-families" class="tab-btn py-3 px-4 border-b-2 border-transparent font-medium text-sm text-gray-600 hover:text-amber-600 flex items-center space-x-2 transition whitespace-nowrap">
-                <i class="fa-solid fa-people-roof"></i> <span>కుటుంబ ప్రొఫార్మా (Family Proforma)</span>
-            </button>
-            <button onclick="switchTab('welfare')" id="nav-welfare" class="tab-btn py-3 px-4 border-b-2 border-transparent font-medium text-sm text-gray-600 hover:text-amber-600 flex items-center space-x-2 transition whitespace-nowrap">
-                <i class="fa-solid fa-hand-holding-heart"></i> <span>సంక్షేమం & పెన్షన్లు</span>
-            </button>
-            <button onclick="switchTab('migrated')" id="nav-migrated" class="tab-btn py-3 px-4 border-b-2 border-transparent font-medium text-sm text-gray-600 hover:text-amber-600 flex items-center space-x-2 transition whitespace-nowrap">
-                <i class="fa-solid fa-plane-departure"></i> <span>ప్రవాస ఓటర్లు</span>
-            </button>
-            <button onclick="switchTab('ivr')" id="nav-ivr" class="tab-btn py-3 px-4 border-b-2 border-transparent font-medium text-sm text-gray-600 hover:text-amber-600 flex items-center space-x-2 transition whitespace-nowrap">
-                <i class="fa-solid fa-phone-volume"></i> <span>IVR సర్వే</span>
-            </button>
-            <button onclick="switchTab('settings')" id="nav-settings" class="tab-btn py-3 px-4 border-b-2 border-transparent font-medium text-sm text-gray-600 hover:text-amber-600 flex items-center space-x-2 transition whitespace-nowrap">
-                <i class="fa-solid fa-file-excel"></i> <span>గూగుల్ షీట్ సెట్టింగ్స్</span>
-            </button>
-        </div>
-    </nav>
+        <!-- MAIN VIEWPORT -->
+        <main class="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-100">
 
-    <!-- Main Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 overflow-y-auto">
-
-        <!-- ================= 1. DASHBOARD TAB ================= -->
-        <div id="tab-dashboard" class="space-y-6">
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-gray-500 font-medium uppercase">మొత్తం ఓటర్లు</p>
-                        <h3 id="stat-total" class="text-2xl font-bold text-gray-800 mt-1">0</h3>
-                        <span class="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">గ్రామ పంచాయతీ</span>
+            <!-- 1. DASHBOARD TAB -->
+            <div id="tab-dashboard" class="tab-content active space-y-6">
+                
+                <!-- TOP METRIC CARDS (INTERACTIVE & CLICKABLE) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
+                    <!-- Total Voters -->
+                    <div onclick="filterDashboardCard('all')" class="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-200 relative overflow-hidden flex flex-col justify-between cursor-pointer hover:border-amber-500 transition">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-[10px] font-bold text-gray-500 uppercase">మొత్తం ఓటర్లు</span>
+                                <div id="metricTotalVoters" class="text-xl font-extrabold text-gray-800 mt-0.5">0</div>
+                            </div>
+                            <div class="bg-blue-50 text-blue-600 w-8 h-8 rounded-xl flex items-center justify-center text-sm shadow-inner">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                        </div>
+                        <div class="mt-2 pt-1 border-t border-gray-100 text-[10px] text-gray-700 space-y-0.5">
+                            <div class="flex justify-between"><span>పు:</span> <strong id="metricTotalMale">0</strong></div>
+                            <div class="flex justify-between"><span>స్త్రీ:</span> <strong id="metricTotalFemale">0</strong></div>
+                        </div>
                     </div>
-                    <div class="bg-blue-100 text-blue-600 p-3 rounded-lg"><i class="fa-solid fa-users text-xl"></i></div>
+
+                    <!-- TDP - Janasena Alliance -->
+                    <div onclick="filterDashboardCard('టీడీపీ-జనసేన కూటమి')" class="bg-white p-3.5 rounded-2xl shadow-sm border border-orange-200 relative overflow-hidden flex flex-col justify-between bg-gradient-to-br from-orange-50/50 to-white cursor-pointer hover:border-orange-500 transition">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-[10px] font-bold text-orange-700 uppercase">కూటమి మద్దతు</span>
+                                <div id="metricAlliance" class="text-xl font-extrabold text-orange-600 mt-0.5">0</div>
+                                <span id="metricAlliancePerc" class="text-[9px] text-orange-500 font-semibold">0%</span>
+                            </div>
+                            <div class="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden border border-orange-300 shadow-inner bg-white">
+                                <img src="https://i.pinimg.com/736x/96/07/b1/9607b1a1fcd3454f745c1a3c70c87b9c.jpg" alt="Alliance Logo" class="w-full h-full object-cover">
+                            </div>
+                        </div>
+                        <div class="mt-2 pt-1 border-t border-orange-100 text-[10px] text-orange-900 space-y-0.5">
+                            <div class="flex justify-between"><span>పు:</span> <strong id="metricAllianceMale">0</strong></div>
+                            <div class="flex justify-between"><span>స్త్రీ:</span> <strong id="metricAllianceFemale">0</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- YSRCP Opponent -->
+                    <div onclick="filterDashboardCard('వైయస్సార్సీపీ')" class="bg-white p-3.5 rounded-2xl shadow-sm border border-blue-200 relative overflow-hidden flex flex-col justify-between bg-gradient-to-br from-blue-50/50 to-white cursor-pointer hover:border-blue-500 transition">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-[10px] font-bold text-blue-700 uppercase">వైయస్సార్సీపీ</span>
+                                <div id="metricYsrcp" class="text-xl font-extrabold text-blue-600 mt-0.5">0</div>
+                                <span id="metricYsrcpPerc" class="text-[9px] text-blue-500 font-semibold">0%</span>
+                            </div>
+                            <div class="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden border border-blue-300 shadow-inner bg-white">
+                                <img src="https://i.pinimg.com/1200x/0a/81/3a/0a813a67af8333e64372035418e27209.jpg" alt="YSRCP Logo" class="w-full h-full object-cover">
+                            </div>
+                        </div>
+                        <div class="mt-2 pt-1 border-t border-blue-100 text-[10px] text-blue-900 space-y-0.5">
+                            <div class="flex justify-between"><span>పు:</span> <strong id="metricYsrcpMale">0</strong></div>
+                            <div class="flex justify-between"><span>స్త్రీ:</span> <strong id="metricYsrcpFemale">0</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- Neutral Voters -->
+                    <div onclick="filterDashboardCard('న్యూట్రల్')" class="bg-white p-3.5 rounded-2xl shadow-sm border border-gray-300 relative overflow-hidden flex flex-col justify-between bg-gradient-to-br from-gray-50 to-white cursor-pointer hover:border-gray-500 transition">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-[10px] font-bold text-gray-700 uppercase">న్యూట్రల్ ఓట్లు</span>
+                                <div id="metricNeutral" class="text-xl font-extrabold text-gray-800 mt-0.5">0</div>
+                                <span id="metricNeutralPerc" class="text-[9px] text-gray-500 font-semibold">0%</span>
+                            </div>
+                            <div class="bg-gray-200 text-gray-700 w-8 h-8 rounded-xl flex items-center justify-center text-sm shadow-inner">
+                                <i class="fa-solid fa-scale-balanced"></i>
+                            </div>
+                        </div>
+                        <div class="mt-2 pt-1 border-t border-gray-200 text-[10px] text-gray-800 space-y-0.5">
+                            <div class="flex justify-between"><span>పు:</span> <strong id="metricNeutralMale">0</strong></div>
+                            <div class="flex justify-between"><span>స్త్రీ:</span> <strong id="metricNeutralFemale">0</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- Survey Pending (సర్వే కానివి) -->
+                    <div onclick="filterDashboardCard('సర్వే కాలేదు')" class="bg-white p-3.5 rounded-2xl shadow-sm border border-amber-300 relative overflow-hidden flex flex-col justify-between bg-gradient-to-br from-amber-50/50 to-white cursor-pointer hover:border-amber-500 transition">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-[10px] font-bold text-amber-700 uppercase">సర్వే కానివి</span>
+                                <div id="metricPending" class="text-xl font-extrabold text-amber-600 mt-0.5">0</div>
+                                <span id="metricPendingPerc" class="text-[9px] text-amber-500 font-semibold">0%</span>
+                            </div>
+                            <div class="bg-amber-100 text-amber-700 w-8 h-8 rounded-xl flex items-center justify-center text-sm shadow-inner">
+                                <i class="fa-solid fa-hourglass-half"></i>
+                            </div>
+                        </div>
+                        <div class="mt-2 pt-1 border-t border-amber-200 text-[10px] text-amber-900 space-y-0.5">
+                            <div class="flex justify-between"><span>పు:</span> <strong id="metricPendingMale">0</strong></div>
+                            <div class="flex justify-between"><span>స్త్రీ:</span> <strong id="metricPendingFemale">0</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- Death Voters (డెత్ ఓటర్లు) -->
+                    <div onclick="filterDashboardCard('డెత్')" class="bg-red-50 p-3.5 rounded-2xl shadow-sm border border-red-200 relative overflow-hidden flex flex-col justify-between cursor-pointer hover:border-red-400 transition">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-[10px] font-bold text-red-700 uppercase">డెత్ ఓటర్లు</span>
+                                <div id="metricDeath" class="text-xl font-extrabold text-red-600 mt-0.5">0</div>
+                                <span class="text-[9px] text-red-500 font-semibold">సపరేట్</span>
+                            </div>
+                            <div class="bg-red-100 text-red-600 w-8 h-8 rounded-xl flex items-center justify-center text-sm shadow-inner">
+                                <i class="fa-solid fa-user-slash"></i>
+                            </div>
+                        </div>
+                        <div class="mt-2 pt-1 border-t border-red-200 text-[10px] text-red-900 space-y-0.5">
+                            <div class="flex justify-between"><span>పు:</span> <strong id="metricDeathMale">0</strong></div>
+                            <div class="flex justify-between"><span>స్త్రీ:</span> <strong id="metricDeathFemale">0</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- Migrated / Out of Town -->
+                    <div onclick="filterDashboardCard('migrated')" class="bg-indigo-600 text-white p-3.5 rounded-2xl shadow-sm relative overflow-hidden flex flex-col justify-between cursor-pointer hover:bg-indigo-700 transition">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-[10px] font-bold text-indigo-200 uppercase">అందుబాటులో లేనివారు</span>
+                                <div id="metricMigrated" class="text-xl font-extrabold text-white mt-0.5">0</div>
+                                <span class="text-[9px] text-indigo-100">ప్రవాస</span>
+                            </div>
+                            <div class="bg-indigo-500/50 text-white w-8 h-8 rounded-xl flex items-center justify-center text-sm shadow-inner">
+                                <i class="fa-solid fa-plane-departure"></i>
+                            </div>
+                        </div>
+                        <div class="mt-2 pt-1 border-t border-indigo-500/50 text-[10px] text-indigo-100 space-y-0.5">
+                            <div class="flex justify-between"><span>పు:</span> <strong id="metricMigratedMale">0</strong></div>
+                            <div class="flex justify-between"><span>స్త్రీ:</span> <strong id="metricMigratedFemale">0</strong></div>
+                        </div>
+                    </div>
                 </div>
 
-                <div onclick="filterByPartyCard('TDP-JanaSena')" class="bg-white p-4 rounded-xl shadow-sm border border-amber-200 hover:bg-amber-50 cursor-pointer transition flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-amber-700 font-medium uppercase">టీడీపీ-జనసేన కూటమి</p>
-                        <h3 id="stat-tdp" class="text-2xl font-bold text-amber-600 mt-1">0</h3>
-                        <span id="stat-tdp-percent" class="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded">0% మద్దతు</span>
+                <!-- WARD-WISE ANALYSIS TABLE (10 WARDS WITH CLICKABLE PENDING & LEAD MARGIN) -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 space-y-4">
+                    <div class="flex items-center justify-between flex-wrap gap-4">
+                        <div class="flex items-center space-x-2">
+                            <div class="bg-amber-100 text-amber-700 p-2 rounded-lg"><i class="fa-solid fa-map-location-dot"></i></div>
+                            <h3 class="text-base font-bold text-gray-800">10 వార్డుల వారీగా బలబలాలు, సర్వే కానివి & లీడింగ్ మెజారిటీ</h3>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <button onclick="openModal('addWardModal')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-4 py-2.5 rounded-lg shadow transition">
+                                <i class="fa-solid fa-plus mr-1"></i> కొత్త వార్డు / బూత్ జోడించు
+                            </button>
+                            <button onclick="switchTab('voters')" class="text-xs text-amber-700 font-bold hover:underline">అన్ని ఓటర్లను చూడండి →</button>
+                        </div>
                     </div>
-                    <div class="bg-amber-100 text-amber-600 p-3 rounded-lg"><i class="fa-solid fa-shield-halved text-xl"></i></div>
-                </div>
 
-                <div onclick="filterByPartyCard('YCP')" class="bg-white p-4 rounded-xl shadow-sm border border-blue-200 hover:bg-blue-50 cursor-pointer transition flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-blue-700 font-medium uppercase">వైసీపీ (ప్రత్యర్థి)</p>
-                        <h3 id="stat-ycp" class="text-2xl font-bold text-blue-600 mt-1">0</h3>
-                        <span id="stat-ycp-percent" class="text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded">0% మద్దతు</span>
-                    </div>
-                    <div class="bg-blue-100 text-blue-600 p-3 rounded-lg"><i class="fa-solid fa-user-xmark text-xl"></i></div>
-                </div>
-
-                <div onclick="filterByPartyCard('Neutral')" class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 hover:bg-gray-100 cursor-pointer transition flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-gray-700 font-medium uppercase">ఇతరులు / న్యూట్రల్</p>
-                        <h3 id="stat-neutral" class="text-2xl font-bold text-gray-600 mt-1">0</h3>
-                        <span id="stat-neutral-percent" class="text-xs text-gray-700 bg-gray-200 px-2 py-0.5 rounded">0% మద్దతు</span>
-                    </div>
-                    <div class="bg-gray-200 text-gray-700 p-3 rounded-lg"><i class="fa-solid fa-scale-unbalanced text-xl"></i></div>
-                </div>
-            </div>
-
-            <!-- Secondary Stats Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="bg-gradient-to-br from-green-500 to-emerald-700 text-white p-5 rounded-xl shadow-sm flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-green-100 uppercase font-medium">మొత్తం పెన్షన్ దారులు</p>
-                        <h3 id="stat-pensioners" class="text-3xl font-bold mt-1">0</h3>
-                        <p class="text-xs text-green-100 mt-1">కూటమి ప్రభుత్వ పథకాల లబ్ధిదారులు</p>
-                    </div>
-                    <div class="bg-white/20 p-4 rounded-xl backdrop-blur"><i class="fa-solid fa-hand-holding-dollar text-2xl"></i></div>
-                </div>
-
-                <div class="bg-gradient-to-br from-purple-500 to-indigo-700 text-white p-5 rounded-xl shadow-sm flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-purple-100 uppercase font-medium">అందుబాటులో లేనివారు (Migrated)</p>
-                        <h3 id="stat-migrated" class="text-3xl font-bold mt-1">0</h3>
-                        <p class="text-xs text-purple-100 mt-1">వేరే ఊర్లలో/నగరాల్లో నివసించేవారు</p>
-                    </div>
-                    <div class="bg-white/20 p-4 rounded-xl backdrop-blur"><i class="fa-solid fa-plane text-2xl"></i></div>
-                </div>
-
-                <div class="bg-gradient-to-br from-amber-500 to-orange-600 text-white p-5 rounded-xl shadow-sm flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-amber-100 uppercase font-medium">పెండింగ్ దరఖాస్తులు</p>
-                        <h3 id="stat-applications" class="text-3xl font-bold mt-1">0</h3>
-                        <p class="text-xs text-amber-100 mt-1">ఇంటి స్థలాలు, ఇళ్ల బిల్లులు, కొత్త పెన్షన్లు</p>
-                    </div>
-                    <div class="bg-white/20 p-4 rounded-xl backdrop-blur"><i class="fa-solid fa-file-lines text-2xl"></i></div>
-                </div>
-            </div>
-
-            <!-- Ward Analysis -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="font-bold text-gray-800 text-lg flex items-center"><i class="fa-solid fa-map-location-dot text-amber-500 mr-2"></i> వార్డుల వారీగా బలబలాలు</h2>
-                        <button onclick="switchTab('voters')" class="text-xs text-amber-600 font-semibold hover:underline">అన్ని ఓటర్లను చూడండి &rarr;</button>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
+                    <div class="overflow-x-auto rounded-xl border border-gray-200">
+                        <table class="w-full text-left border-collapse text-sm">
                             <thead>
-                                <tr class="bg-gray-50 text-gray-600 text-xs uppercase font-semibold">
-                                    <th class="p-3">వార్డు నెంబర్</th>
-                                    <th class="p-3">ఓటర్లు</th>
-                                    <th class="p-3 text-amber-600">టీడీపీ-జనసేన</th>
-                                    <th class="p-3 text-blue-600">వైసీపీ</th>
+                                <tr class="bg-gray-50 text-gray-700 uppercase text-xs font-bold border-b border-gray-200">
+                                    <th class="p-3">వార్డు</th>
+                                    <th class="p-3">మొత్తం (పు/స్త్రీ)</th>
+                                    <th class="p-3 text-orange-600">కూటమి</th>
+                                    <th class="p-3 text-blue-600">వైయస్సార్సీపీ</th>
                                     <th class="p-3 text-gray-600">న్యూట్రల్</th>
-                                    <th class="p-3">లీడింగ్</th>
+                                    <th class="p-3 text-amber-600">సర్వే కానివి (క్లిక్ చేయండి)</th>
+                                    <th class="p-3">లీడింగ్ & మెజారిటీ (లీడ్ ఓట్లు)</th>
                                 </tr>
                             </thead>
-                            <tbody id="ward-summary-table" class="divide-y divide-gray-100 text-sm">
+                            <tbody id="wardAnalysisTableBody" class="divide-y divide-gray-100">
+                                <!-- Populated dynamically -->
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between">
-                    <div>
-                        <h2 class="font-bold text-gray-800 text-lg mb-4 flex items-center"><i class="fa-solid fa-bolt text-amber-500 mr-2"></i> త్వరిత చర్యలు (Quick Actions)</h2>
-                        <div class="space-y-3">
-                            <button onclick="openAddVoterModal()" class="w-full text-left p-3 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 font-medium text-sm transition flex items-center justify-between border border-amber-200">
-                                <span><i class="fa-solid fa-user-plus mr-2 text-amber-600"></i> కొత్త ఓటరు డేటా ఎంటర్ చేయి</span>
-                                <i class="fa-solid fa-chevron-right text-xs"></i>
+                <!-- CHARTS & QUICK ACTIONS -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                        <h4 class="font-bold text-gray-800 mb-4 flex items-center"><i class="fa-solid fa-chart-pie mr-2 text-amber-600"></i> కూటమి vs ప్రత్యర్థి బలాలు (విజువల్ డ్రాయింగ్)</h4>
+                        <div class="relative h-64 flex items-center justify-center">
+                            <canvas id="dashboardPieChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col justify-between">
+                        <div>
+                            <h4 class="font-bold text-gray-800 mb-2 flex items-center"><i class="fa-solid fa-bolt mr-2 text-amber-600"></i> త్వరిత చర్యలు & నిర్వహణ</h4>
+                            <p class="text-xs text-gray-500 mb-4">ఎన్నికల సర్వే ఎంట్రీ, ఎక్సెల్ ఫైల్ అప్‌లోడ్/డౌన్‌లోడ్ మరియు గూగుల్ షీట్ సింక్ నిర్వహించండి.</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button onclick="switchTab('voters')" class="p-3.5 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-xl font-semibold text-xs flex items-center justify-center space-x-2 transition border border-amber-200">
+                                <i class="fa-solid fa-user-plus text-base"></i><span>ఓటర్ల ఎంట్రీ / ఎడిట్</span>
                             </button>
-                            <button onclick="switchTab('families')" class="w-full text-left p-3 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-800 font-medium text-sm transition flex items-center justify-between border border-indigo-200">
-                                <span><i class="fa-solid fa-people-roof mr-2 text-indigo-600"></i> కుటుంబ ప్రొఫార్మా & టు-డూ లిస్ట్</span>
-                                <i class="fa-solid fa-chevron-right text-xs"></i>
+                            <button onclick="syncWithGoogleSheet()" class="p-3.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl font-semibold text-xs flex items-center justify-center space-x-2 transition border border-emerald-200">
+                                <i class="fa-solid fa-rotate text-base"></i><span>గూగుల్ షీట్ సింక్</span>
                             </button>
-                            <button onclick="switchTab('welfare')" class="w-full text-left p-3 rounded-lg bg-green-50 hover:bg-green-100 text-green-800 font-medium text-sm transition flex items-center justify-between border border-green-200">
-                                <span><i class="fa-solid fa-hand-holding-dollar mr-2 text-green-600"></i> పెన్షన్ & సంక్షేమ లబ్ధిదారులు</span>
-                                <i class="fa-solid fa-chevron-right text-xs"></i>
+                            <button onclick="triggerExcelImport()" class="p-3.5 bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-xl font-semibold text-xs flex items-center justify-center space-x-2 transition border border-blue-200">
+                                <i class="fa-solid fa-file-excel text-base"></i><span>ఎక్సెల్ అప్‌లోడ్</span>
                             </button>
-                            <button onclick="switchTab('migrated')" class="w-full text-left p-3 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-800 font-medium text-sm transition flex items-center justify-between border border-purple-200">
-                                <span><i class="fa-solid fa-car mr-2 text-purple-600"></i> ప్రవాస ఓటర్ల ఫాలో-అప్</span>
-                                <i class="fa-solid fa-chevron-right text-xs"></i>
+                            <button onclick="exportToExcel()" class="p-3.5 bg-purple-50 hover:bg-purple-100 text-purple-800 rounded-xl font-semibold text-xs flex items-center justify-center space-x-2 transition border border-purple-200">
+                                <i class="fa-solid fa-file-export text-base"></i><span>ఎక్సెల్ డౌన్‌లోడ్</span>
                             </button>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- ================= 2. VOTERS LIST TAB ================= -->
-        <div id="tab-voters" class="space-y-4 hidden">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap gap-3 items-center justify-between">
-                <div class="flex flex-wrap gap-2 items-center flex-1">
-                    <div class="relative min-w-[200px] flex-1">
-                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                            <i class="fa-solid fa-search"></i>
-                        </span>
-                        <input type="text" id="search-input" onkeyup="filterVoters()" placeholder="పేరు, ఫోన్ నెంబర్ లేదా ఇల్లు నెంబర్ ద్వారా వెతకండి..." class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+            </div>
+
+            <!-- 2. VOTER LIST TAB -->
+            <div id="tab-voters" class="tab-content space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 space-y-4">
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center space-x-3 w-full md:w-auto flex-1 flex-wrap gap-2">
+                            <div class="relative flex-1 min-w-[240px]">
+                                <i class="fa-solid fa-search absolute left-3.5 top-3 text-gray-400"></i>
+                                <input type="text" id="voterSearchInput" oninput="renderVotersTable()" placeholder="పేరు, ఓటర్ ఐడీ, ఆధార్ లేదా మొబైల్ నెంబర్ ద్వారా వెతకండి..." class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                            </div>
+                            <select id="filterWard" onchange="renderVotersTable()" class="px-4 py-2.5 rounded-lg border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-amber-500">
+                                <option value="">అన్ని వార్డులు</option>
+                                <option value="వార్డు 1">వార్డు 1</option>
+                                <option value="వార్డు 2">వార్డు 2</option>
+                                <option value="వార్డు 3">వార్డు 3</option>
+                                <option value="వార్డు 4">వార్డు 4</option>
+                                <option value="వార్డు 5">వార్డు 5</option>
+                                <option value="వార్డు 6">వార్డు 6</option>
+                                <option value="వార్డు 7">వార్డు 7</option>
+                                <option value="వార్డు 8">వార్డు 8</option>
+                                <option value="వార్డు 9">వార్డు 9</option>
+                                <option value="వార్డు 10">వార్డు 10</option>
+                            </select>
+                            <select id="filterParty" onchange="renderVotersTable()" class="px-4 py-2.5 rounded-lg border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-amber-500">
+                                <option value="">అన్ని పార్టీలు / స్టేటస్</option>
+                                <option value="టీడీపీ-జనసేన కూటమి">టీడీపీ-జనసేన కూటమి</option>
+                                <option value="వైయస్సార్సీపీ">వైయస్సార్సీపీ</option>
+                                <option value="న్యూట్రల్">న్యూట్రల్</option>
+                                <option value="సర్వే కాలేదు">సర్వే కాలేదు (Pending)</option>
+                                <option value="డెత్">డెత్ / ఓటు వేయనివారు</option>
+                            </select>
+                            <button onclick="filterMissingMobile()" class="px-3 py-2.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-bold border border-red-200 transition">
+                                <i class="fa-solid fa-phone-slash mr-1"></i> మొబైల్ లేనివారు
+                            </button>
+                            <button onclick="filterUnassignedFamily()" class="px-3 py-2.5 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg text-xs font-bold border border-amber-200 transition">
+                                <i class="fa-solid fa-people-group mr-1"></i> ఫ్యామిలీ లేనివారు
+                            </button>
+                        </div>
+                        <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
+                            <button onclick="openModal('addVoterModal')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-4 py-2.5 rounded-lg shadow transition">
+                                <i class="fa-solid fa-user-plus mr-1"></i> కొత్త ఓటర్ చేర్చు
+                            </button>
+                            <button onclick="checkDuplicateVoters()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2.5 rounded-lg shadow transition">
+                                <i class="fa-solid fa-clone mr-1"></i> డూప్లికేట్లు
+                            </button>
+                        </div>
                     </div>
 
-                    <select id="filter-party" onchange="filterVoters()" class="py-2 px-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
-                        <option value="">అన్ని పార్టీలు (All Parties)</option>
-                        <option value="TDP-JanaSena">టీడీపీ - జనసేన కూటమి</option>
-                        <option value="YCP">వైసీపీ</option>
-                        <option value="Neutral">ఇతరులు / న్యూట్రల్</option>
-                    </select>
-
-                    <select id="filter-ward" onchange="filterVoters()" class="py-2 px-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
-                        <option value="">అన్ని వార్డులు (All Wards)</option>
-                        <option value="Ward 1">వార్డు 1</option>
-                        <option value="Ward 2">వార్డు 2</option>
-                        <option value="Ward 3">వార్డు 3</option>
-                        <option value="Ward 4">వార్డు 4</option>
-                        <option value="Ward 5">వార్డు 5</option>
-                        <option value="Ward 6">వార్డు 6</option>
-                        <option value="Ward 7">వార్డు 7</option>
-                        <option value="Ward 8">వార్డు 8</option>
-                        <option value="Ward 9">వార్డు 9</option>
-                        <option value="Ward 10">వార్డు 10</option>
-                    </select>
-
-                    <!-- Grouping Filter -->
-                    <select id="filter-grouping" onchange="filterVoters()" class="py-2 px-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
-                        <option value="">కుటుంబ గ్రూపింగ్ స్థితి</option>
-                        <option value="HasGroup">గ్రూపింగ్ నంబర్ ఉన్నవారు</option>
-                        <option value="NoGroup">గ్రూపింగ్ నంబర్ లేనివారు (Separated)</option>
-                    </select>
-
-                    <select id="filter-pension" onchange="filterVoters()" class="py-2 px-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
-                        <option value="">పెన్షన్ స్థితి</option>
-                        <option value="Yes">పెన్షన్ ఉన్నవారు</option>
-                        <option value="No">పెన్షన్ లేనివారు</option>
-                    </select>
-
-                    <select id="filter-availability" onchange="filterVoters()" class="py-2 px-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
-                        <option value="">అందుబాటులో ఉనికి</option>
-                        <option value="Available">ఊర్లో అందుబాటులో ఉన్నారు</option>
-                        <option value="NotAvailable">ఊర్లో లేరు (Migrated)</option>
-                    </select>
-                </div>
-
-                <div class="flex items-center space-x-2">
-                    <button onclick="openAddVoterModal()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow transition flex items-center">
-                        <i class="fa-solid fa-plus mr-1"></i> ఓటరు చేర్చు
-                    </button>
-                    <button onclick="syncToGoogleSheet()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition flex items-center">
-                        <i class="fa-solid fa-rotate mr-1"></i> సింక్
-                    </button>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-gray-50 text-gray-600 text-xs uppercase font-semibold border-b border-gray-200">
-                                <th class="p-3">ఓటరు వివరాలు (పేరు / తండ్రి పేరు)</th>
-                                <th class="p-3">Voter ID</th>
-                                <th class="p-3">వార్డు & ఇల్లు నెంబర్</th>
-                                <th class="p-3">మొబైల్ నెంబర్</th>
-                                <th class="p-3">కుటుంబ పెద్ద ఫోన్ నెం</th>
-                                <th class="p-3">పార్టీ మొగ్గు</th>
-                                <th class="p-3">పెన్షన్ / సంక్షేమం</th>
-                                <th class="p-3">అందుబాటులో ఉనికి</th>
-                                <th class="p-3 text-center">చర్యలు</th>
-                            </tr>
-                        </thead>
-                        <tbody id="voters-table-body" class="divide-y divide-gray-100 text-sm">
-                        </tbody>
-                    </table>
-                </div>
-                <div class="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center text-xs text-gray-500">
-                    <span id="voters-count-display">మొత్తం ఓటర్లు: 0</span>
-                    <span class="text-amber-600 font-medium">టీడీపీ-జనసేన కూటమి సర్వే ప్లాట్‌ఫాం</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- ================= 3. FAMILY PROFORMA TAB ================= -->
-        <div id="tab-families" class="space-y-6 hidden">
-            <div class="bg-gradient-to-r from-indigo-600 to-purple-700 text-white p-6 rounded-2xl shadow-sm flex flex-col md:flex-row justify-between items-center">
-                <div>
-                    <h2 class="text-xl font-bold flex items-center"><i class="fa-solid fa-people-roof mr-3"></i> కుటుంబ ప్రొఫార్మా & క్యాంపెయిన్ అటెండెన్స్ ట్రాకర్</h2>
-                    <p class="text-xs text-indigo-100 mt-1">కుటుంబ పెద్ద ఫోన్ నెంబర్ లేదా విడివిడిగా ఉన్న గ్రూప్ ఆధారంగా ప్రచారం ట్రాక్ చేయండి.</p>
-                </div>
-                <div class="mt-4 md:mt-0 bg-white/25 px-4 py-2 rounded-xl backdrop-blur text-center">
-                    <span class="text-xs block text-indigo-200">మొత్తం కుటుంబ యూనిట్లు</span>
-                    <span id="family-count-badge" class="text-2xl font-bold">0</span>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-3">
-                    <h3 class="font-bold text-gray-800 text-sm uppercase tracking-wide flex items-center">
-                        <i class="fa-solid fa-list mr-2 text-indigo-600"></i> కుటుంబాలు (Family Units)
-                    </h3>
-                    <div class="relative">
-                        <input type="text" id="family-search" onkeyup="filterFamilyList()" placeholder="కుటుంబ పెద్ద పేరు లేదా ఫోన్ నెం..." class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <div id="family-list-container" class="space-y-2 max-h-[500px] overflow-y-auto">
-                    </div>
-                </div>
-
-                <div id="family-detail-container" class="md:col-span-2 bg-white p-5 rounded-xl shadow-sm border border-gray-100 space-y-6">
-                    <div class="text-center py-12 text-gray-400">
-                        <i class="fa-solid fa-hand-pointer text-3xl mb-2"></i>
-                        <p class="text-sm">ఎడమ వైపు నుండి ఒక కుటుంబాన్ని ఎంచుకోండి.</p>
+                    <div class="overflow-x-auto rounded-xl border border-gray-200">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-700 uppercase text-xs font-bold border-b border-gray-200">
+                                    <th class="p-3.5">సీరియల్ / ఓటర్ ఐడీ</th>
+                                    <th class="p-3.5">ఓటర్ పేరు & ఆధార్</th>
+                                    <th class="p-3.5">ఇంటి నెం / వార్డు / బూత్</th>
+                                    <th class="p-3.5">వయసు / లింగం</th>
+                                    <th class="p-3.5">మద్దతు పార్టీ</th>
+                                    <th class="p-3.5">లభ్యత / స్టేటస్</th>
+                                    <th class="p-3.5">మొబైల్ & ఫ్యామిలీ</th>
+                                    <th class="p-3.5 text-center">చర్యలు</th>
+                                </tr>
+                            </thead>
+                            <tbody id="votersTableBody" class="divide-y divide-gray-100">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- ================= 4. WELFARE & PENSION TAB ================= -->
-        <div id="tab-welfare" class="space-y-6 hidden">
-            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <p class="text-xs text-gray-500 font-medium">మొత్తం పెన్షన్ లబ్ధిదారులు</p>
-                    <h3 id="welfare-total-pensions" class="text-2xl font-bold text-green-600 mt-1">0</h3>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <p class="text-xs text-gray-500 font-medium">కొత్త పెన్షన్ దరఖాస్తులు</p>
-                    <h3 id="welfare-new-pensions" class="text-2xl font-bold text-amber-600 mt-1">0</h3>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <p class="text-xs text-gray-500 font-medium">ఇంటి స్థలాల దరఖాస్తులు</p>
-                    <h3 id="welfare-house-sites" class="text-2xl font-bold text-blue-600 mt-1">0</h3>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <p class="text-xs text-gray-500 font-medium">ఇళ్ల నిర్మాణ బిల్లులు</p>
-                    <h3 id="welfare-housing-bills" class="text-2xl font-bold text-purple-600 mt-1">0</h3>
-                </div>
-            </div>
-
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
-                    <h2 class="font-bold text-gray-800 text-lg flex items-center">
-                        <i class="fa-solid fa-hand-holding-heart text-green-600 mr-2"></i> సంక్షేమ పథకాలు & దరఖాస్తుల స్థితి ట్రాకింగ్
-                    </h2>
-                    <input type="text" id="welfare-search" onkeyup="filterWelfare()" placeholder="పేరు లేదా ఫోన్ నెంబర్ ద్వారా వెతకండి..." class="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-green-500">
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-gray-50 text-gray-600 text-xs uppercase font-semibold border-b border-gray-200">
-                                <th class="p-3">ఓటరు పేరు / మొబైల్</th>
-                                <th class="p-3">వార్డు & ఇల్లు నెం</th>
-                                <th class="p-3">పార్టీ మొగ్గు</th>
-                                <th class="p-3">పెన్షన్ వివరాలు</th>
-                                <th class="p-3">ఇంటి స్థలం / ఇళ్ల బిల్లు</th>
-                                <th class="p-3">దరఖాస్తుల స్థితి (Status)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="welfare-table-body" class="divide-y divide-gray-100 text-sm">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- ================= 5. MIGRATED VOTERS TAB ================= -->
-        <div id="tab-migrated" class="space-y-6 hidden">
-            <div class="bg-gradient-to-r from-purple-600 to-indigo-700 text-white p-6 rounded-2xl shadow-sm flex flex-col md:flex-row justify-between items-center">
-                <div>
-                    <h2 class="text-xl font-bold flex items-center"><i class="fa-solid fa-plane-departure mr-3"></i> ప్రవాస / అందుబాటులో లేని ఓటర్ల ఫాలో-అప్ (Migrated Voters)</h2>
-                    <p class="text-xs text-purple-100 mt-1">ఊర్లో లేని ఓటర్లు ఎవరు ఏ పార్టీకి చెందినవారు?</p>
-                </div>
-                <div class="mt-4 md:mt-0 bg-white/25 px-4 py-2 rounded-xl backdrop-blur text-center">
-                    <span class="text-xs block text-purple-200">మొత్తం ప్రవాస ఓటర్లు</span>
-                    <span id="migrated-count-badge" class="text-2xl font-bold">0</span>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="bg-white p-4 rounded-xl border border-amber-200 shadow-sm">
-                    <p class="text-xs text-amber-700 font-semibold uppercase">టీడీపీ-జనసేన ప్రవాస ఓటర్లు</p>
-                    <h3 id="migrated-tdp-count" class="text-2xl font-bold text-amber-600 mt-1">0</h3>
-                </div>
-                <div class="bg-white p-4 rounded-xl border border-blue-200 shadow-sm">
-                    <p class="text-xs text-blue-700 font-semibold uppercase">వైసీపీ ప్రవాస ఓటర్లు</p>
-                    <h3 id="migrated-ycp-count" class="text-2xl font-bold text-blue-600 mt-1">0</h3>
-                </div>
-                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                    <p class="text-xs text-gray-700 font-semibold uppercase">న్యూట్రల్ ప్రవాస ఓటర్లు</p>
-                    <h3 id="migrated-neutral-count" class="text-2xl font-bold text-gray-600 mt-1">0</h3>
-                </div>
-            </div>
-
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold text-gray-800 text-md">ప్రస్తుతం ఊర్లో లేని ఓటర్ల జాబితా</h3>
-                    <input type="text" id="migrated-search" onkeyup="filterMigrated()" placeholder="నగరం లేదా పేరు వెతకండి..." class="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-gray-50 text-gray-600 text-xs uppercase font-semibold border-b border-gray-200">
-                                <th class="p-3">ఓటరు పేరు / ఫోన్</th>
-                                <th class="p-3">వార్డు</th>
-                                <th class="p-3">పార్టీ మొగ్గు</th>
-                                <th class="p-3">ప్రస్తుతం ఉన్న నగరం</th>
-                                <th class="p-3">ఫాలో-అప్ ప్రణాళిక</th>
-                                <th class="p-3 text-center">చర్యలు</th>
-                            </tr>
-                        </thead>
-                        <tbody id="migrated-table-body" class="divide-y divide-gray-100 text-sm">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- ================= 6. IVR SURVEY SIMULATOR TAB ================= -->
-        <div id="tab-ivr" class="space-y-6 hidden">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-gray-100 pb-4">
-                    <div>
-                        <h2 class="text-xl font-bold text-gray-800 flex items-center">
-                            <i class="fa-solid fa-phone-volume text-blue-600 mr-2"></i> IVR ఆటోమేటెడ్ సర్వే సిస్టమ్
-                        </h2>
-                        <p class="text-xs text-gray-500 mt-1">ఫోన్ కాల్స్ ద్వారా ఓటర్ల అభిప్రాయాలు సేకరించండి.</p>
-                    </div>
-                    <button onclick="simulateBatchIVR()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-sm shadow transition flex items-center mt-3 md:mt-0">
-                        <i class="fa-solid fa-play mr-2"></i> ఆటోమేటెడ్ IVR కాల్స్ రన్ చేయి
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-gray-50 p-5 rounded-xl border border-gray-200 space-y-4">
-                        <h3 class="font-bold text-gray-700 text-sm uppercase tracking-wide">సింగిల్ ఓటరు IVR కాల్</h3>
+            <!-- 3. FAMILY PROFORMA TAB -->
+            <div id="tab-families" class="tab-content space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 space-y-4">
+                    <div class="flex items-center justify-between flex-wrap gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">ఓటరును ఎంచుకోండి</label>
-                            <select id="ivr-voter-select" class="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-sm">
+                            <h3 class="text-base font-bold text-gray-800">కుటుంబ ప్రోఫార్మా & గ్రూపింగ్ (Family Proforma & Editing)</h3>
+                            <p class="text-xs text-gray-500">కుటుంబ పెద్ద మొబైల్ నెంబర్ ఆధారంగా కుటుంబ సభ్యుల వివరాలు, సంక్షేమ పథకాలు, మరియు భవిష్యత్తు అవసరాలను నిర్వహించండి.</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="text" id="familySearchInput" oninput="renderFamilyList()" placeholder="కుటుంబ పెద్ద మొబైల్ నెం లేదా పేరుతో వెతకండి..." class="px-4 py-2 rounded-lg border border-gray-300 text-sm w-72 focus:ring-2 focus:ring-amber-500">
+                        </div>
+                    </div>
+
+                    <div id="familyContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. WELFARE & PENSIONS TAB -->
+            <div id="tab-welfare" class="tab-content space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 space-y-4">
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div>
+                            <h3 class="text-base font-bold text-gray-800">సంక్షేమం & పెన్షన్ల పోర్షన్ (Welfare & Scheme Requests)</h3>
+                            <p class="text-xs text-gray-500">లబ్ధిదారులు మరియు ఫ్యూచర్‌లో కావలసిన సంక్షేమ పథకాల రిక్వెస్ట్‌లను ఫిల్టర్ చేయండి.</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <select id="welfareSchemeFilter" onchange="renderWelfareTable()" class="px-4 py-2 rounded-lg border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-amber-500">
+                                <option value="">అన్ని పథకాలు / రిక్వెస్ట్‌లు</option>
+                                <option value="పెన్షన్">పెన్షన్లు</option>
+                                <option value="హౌసింగ్">ఇంటి స్థలాలు / హౌసింగ్</option>
+                                <option value="రైతు భరోసా">రైతు భరోసా</option>
+                                <option value="ఉద్యోగం">ఉద్యోగ కల్పన / ఉపాధి</option>
+                                <option value="ఫ్యూచర్ రిక్వెస్ట్">ఇతర భవిష్యత్తు అవసరాలు</option>
                             </select>
                         </div>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-gray-200">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-700 uppercase text-xs font-bold border-b border-gray-200">
+                                    <th class="p-3.5">ఓటర్ పేరు & ఐడీ</th>
+                                    <th class="p-3.5">వార్డు & ఇల్లు</th>
+                                    <th class="p-3.5">ప్రస్తుతం అందుతున్న పథకాలు</th>
+                                    <th class="p-3.5 text-amber-700">ఫ్యూచర్‌లో కోరుకుంటున్న రిక్వెస్ట్‌లు</th>
+                                    <th class="p-3.5">వ్యక్తిగత & వార్డు సహాయం</th>
+                                </tr>
+                            </thead>
+                            <tbody id="welfareTableBody" class="divide-y divide-gray-100">
+                                <!-- Populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. MIGrated & EXCLUDED VOTERS TAB -->
+            <div id="tab-migrated" class="tab-content space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 space-y-4">
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">IVR రెస్పాన్స్</label>
-                            <select id="ivr-response-select" class="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-sm">
-                                <option value="TDP-JanaSena">ప్రెస్ 1: టీడీపీ-జనసేన</option>
-                                <option value="YCP">ప్రెస్ 2: వైసీపీ</option>
-                                <option value="Neutral">ప్రెస్ 3: న్యూట్రల్</option>
-                                <option value="Disconnected">ఫోన్ కట్ / స్పందించలేదు</option>
+                            <h3 class="text-base font-bold text-gray-800">ప్రవాస ఓటర్లు & లభ్యత లేనివారు (Migrated / Out of Town Analysis)</h3>
+                            <p class="text-xs text-gray-500">బయట ఊర్లలో / నగరాల్లో ఉన్న ఓటర్లను ఊరి వారీగా ఫిల్టర్ చేసి వివరాలు మరియు ఎక్సెల్ రిపోర్ట్ డౌన్‌లోడ్ చేసుకోండి.</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <select id="filterMigrantCity" onchange="renderMigratedTable()" class="px-4 py-2 rounded-lg border border-gray-300 text-sm bg-white focus:ring-2 focus:ring-amber-500">
+                                <option value="">అన్ని నగరాలు / ఊర్లు</option>
+                                <option value="హైదరాబాద్">హైదరాబాద్</option>
+                                <option value="బెంగళూరు">బెంగళూరు</option>
+                                <option value="చెన్నై">చెన్నై</option>
+                                <option value="విశాఖపట్నం">విశాఖపట్నం</option>
+                                <option value="ఇతర ప్రాంతం">ఇతర ప్రాంతం</option>
                             </select>
+                            <button onclick="exportMigratedExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2.5 rounded-lg shadow transition">
+                                <i class="fa-solid fa-file-excel mr-1.5"></i> ప్రవాస ఓటర్ల ఎక్సెల్ డౌన్‌లోడ్
+                            </button>
                         </div>
-                        <button onclick="triggerSingleIVR()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-lg font-bold text-sm shadow transition">
-                            <i class="fa-solid fa-phone mr-1"></i> రెస్పాన్స్ రికార్డ్ చేయి
-                        </button>
                     </div>
 
-                    <div class="md:col-span-2 bg-gray-50 p-5 rounded-xl border border-gray-200">
-                        <h3 class="font-bold text-gray-700 text-sm uppercase tracking-wide mb-3">IVR కాల్ లాగ్స్</h3>
-                        <div class="overflow-x-auto bg-white rounded-lg border border-gray-200">
-                            <table class="w-full text-left text-xs">
-                                <thead class="bg-gray-100 text-gray-600 border-b border-gray-200">
-                                    <tr>
-                                        <th class="p-2.5">సమయం</th>
-                                        <th class="p-2.5">ఓటరు పేరు</th>
-                                        <th class="p-2.5">ఫోన్</th>
-                                        <th class="p-2.5">రెస్పాన్స్</th>
-                                        <th class="p-2.5">స్టేటస్</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="ivr-logs-body" class="divide-y divide-gray-100">
-                                    <tr><td colspan="5" class="p-4 text-center text-gray-400">ఇంకా ఎలాంటి IVR కాల్స్ రన్ చేయబడలేదు.</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="overflow-x-auto rounded-xl border border-gray-200">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-700 uppercase text-xs font-bold border-b border-gray-200">
+                                    <th class="p-3.5">ఓటర్ పేరు</th>
+                                    <th class="p-3.5">వార్డు & ఇల్లు</th>
+                                    <th class="p-3.5">ప్రస్తుత నివాస ప్రాంతం / ఊరు</th>
+                                    <th class="p-3.5">మద్దతు పార్టీ</th>
+                                    <th class="p-3.5">ఫోన్ నెంబర్ & ఫ్యామిలీ హెడ్</th>
+                                </tr>
+                            </thead>
+                            <tbody id="migratedTableBody" class="divide-y divide-gray-100">
+                                <!-- Populated -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- ================= 7. SETTINGS TAB ================= -->
-        <div id="tab-settings" class="space-y-6 hidden">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
+        </main>
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- Add/Edit Voter Modal -->
+    <div id="addVoterModal" class="fixed inset-0 z-50 bg-gray-900 bg-opacity-70 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <h3 id="voterModalTitle" class="text-lg font-bold text-gray-800">కొత్త ఓటర్ ప్రొఫైల్ ఎంట్రీ / ఎడిట్</h3>
+                <button onclick="closeModal('addVoterModal')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="voterForm" onsubmit="saveVoter(event)" class="space-y-4 text-sm">
+                <input type="hidden" id="editVoterId">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-semibold text-gray-600 mb-1">సీరియల్ నెంబర్</label>
+                        <input type="text" id="fSerial" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-600 mb-1">ఓటర్ ఐడీ కార్డ్ నెంబర్</label>
+                        <input type="text" id="fVoterId" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500">
+                    </div>
+                </div>
                 <div>
-                    <h2 class="text-xl font-bold text-gray-800 mb-2 flex items-center">
-                        <i class="fa-solid fa-file-excel text-green-600 mr-2"></i> గూగుల్ షీట్ సింక్ సెట్టింగ్స్
-                    </h2>
-                    <p class="text-xs text-gray-500">మీ వెబ్‌సైట్ డేటా గూగుల్ షీట్‌లో స్టోర్ అవ్వడానికి Apps Script URL ఎంటర్ చేయండి.</p>
+                    <label class="block font-semibold text-gray-600 mb-1">ఓటర్ పూర్తి పేరు</label>
+                    <input type="text" id="fName" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500">
                 </div>
-
-                <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3">
-                    <label class="block text-xs font-bold text-gray-700 uppercase">Google Apps Script Web App URL (API)</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="gsm-script-url" placeholder="https://script.google.com/macros/s/AKfycbwX1T0lrLDHCuy4zePxzj8uslI3Fl9nQYYM_ylklW4suJRrqYxj20_OrHEUy8d4x07K/exec" class="flex-1 p-2.5 bg-white border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-green-500 focus:outline-none">
-                        <button onclick="saveGoogleScriptUrl()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition">సేవ్ చేయي</button>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="p-4 bg-amber-50 rounded-xl border border-amber-200 flex flex-col justify-between">
-                        <h4 class="font-bold text-amber-900 text-sm mb-1">గూగుల్ షీట్ నుండి డేటా తెచ్చుకో (Pull)</h4>
-                        <button onclick="fetchFromGoogleSheet()" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-lg text-xs font-bold transition mt-3">లోడ్ చేయి</button>
-                    </div>
-                    <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-200 flex flex-col justify-between">
-                        <h4 class="font-bold text-emerald-900 text-sm mb-1">వెబ్‌సైట్ డేటా గూగుల్ షీట్‌కు పంపు (Push Sync)</h4>
-                        <button onclick="syncToGoogleSheet()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg text-xs font-bold transition mt-3">సింక్ చేయి</button>
-                    </div>
-                </div>
-
-                <div class="pt-4 border-t border-gray-100 flex justify-between items-center">
-                    <h4 class="font-bold text-red-600 text-sm">డేటా రీసెట్ (Reset Default Data)</h4>
-                    <button onclick="resetDefaultData()" class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-4 py-2 rounded-lg text-xs font-bold transition">శాంపిల్ డేటా లోడ్ చేయి</button>
-                </div>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- ================= ADD / EDIT VOTER MODAL ================= -->
-    <div id="voter-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full overflow-hidden my-8">
-            <div class="bg-gradient-to-r from-amber-500 to-red-600 text-white px-6 py-4 flex justify-between items-center">
-                <h3 id="modal-title" class="font-bold text-lg"><i class="fa-solid fa-user-plus mr-2"></i> కొత్త ఓటరు వివరాలు చేర్చు</h3>
-                <button onclick="closeAddVoterModal()" class="text-white hover:text-gray-200 text-xl font-bold">&times;</button>
-            </div>
-
-            <form id="voter-form" onsubmit="saveVoter(event)" class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
-                <input type="hidden" id="voter-id">
-
-                <!-- Language Toggle & Translation Box Instructions -->
-                <div class="bg-amber-50 border border-amber-200 p-3 rounded-lg text-xs text-amber-800 flex justify-between items-center">
-                    <span><i class="fa-solid fa-language mr-1"></i> తెలుగులో టైప్ చేస్తే ఇంగ్లీష్‌లోకి / ఇంగ్లీష్‌లో టైప్ చేస్తే తెలుగులోకి ఆటోమేటిక్‌గా మారుతుంది. (కాపీ & పేస్ట్ కూడా చేసుకోవచ్చు)</span>
-                    <button type="button" onclick="toggleTransliteration()" id="transliteration-toggle" class="bg-amber-600 text-white px-2.5 py-1 rounded font-bold text-[11px]">ట్రాన్స్‌లిటరేషన్: ఆన్</button>
-                </div>
-
-                <!-- Personal Information -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">ఓటరు పూర్తి పేరు *</label>
-                        <input type="text" id="form-name" required class="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" placeholder="ఉదా: యలమంచిలి రామారావు (Ctrl+V enabled)">
+                        <label class="block font-semibold text-gray-600 mb-1">తండ్రి / భర్త పేరు</label>
+                        <input type="text" id="fGuardian" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">తండ్రి / భర్త పేరు</label>
-                        <input type="text" id="form-guardian" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" placeholder="ఉదా: సూర్యనారాయణ">
+                        <label class="block font-semibold text-gray-600 mb-1">ఆధార్ నెంబర్ (ఆప్షనల్)</label>
+                        <input type="text" id="fAadhaar" placeholder="12 అంకెల ఆధార్ నెంబర్" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500">
                     </div>
                 </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Voter ID</label>
-                        <input type="text" id="form-voterid" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" placeholder="Ex: TBG01234567">
+                        <label class="block font-semibold text-gray-600 mb-1">ఇంటి నెంబర్</label>
+                        <input type="text" id="fHouse" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">వార్డు నెంబర్ *</label>
-                        <select id="form-ward" required class="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                            <option value="Ward 1">వార్డు 1</option>
-                            <option value="Ward 2">వార్డు 2</option>
-                            <option value="Ward 3">వార్డు 3</option>
-                            <option value="Ward 4">వార్డు 4</option>
-                            <option value="Ward 5">వార్డు 5</option>
-                            <option value="Ward 6">వార్డు 6</option>
-                            <option value="Ward 7">వార్డు 7</option>
-                            <option value="Ward 8">వార్డు 8</option>
-                            <option value="Ward 9">వార్డు 9</option>
-                            <option value="Ward 10">వార్డు 10</option>
+                        <label class="block font-semibold text-gray-600 mb-1">వయసు</label>
+                        <input type="number" id="fAge" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-600 mb-1">లింగం (Col G)</label>
+                        <select id="fGender" class="w-full px-3 py-2 border rounded-lg bg-white">
+                            <option value="పురుషులు">పురుషులు (Male)</option>
+                            <option value="స్త్రీలు">స్త్రీలు (Female)</option>
                         </select>
                     </div>
                 </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">ఇంటి నెంబర్</label>
-                        <input type="text" id="form-houseno" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" placeholder="ఉదా: 3-45">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">వ్యక్తిగత మొబైల్ నెంబర్</label>
-                        <input type="tel" id="form-mobile" pattern="[0-9]{10}" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" placeholder="10 అంకెల నెంబర్">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">కుటుంబ పెద్ద ఫోన్ నంబర్ (Optional)</label>
-                        <input type="tel" id="form-familyhead" pattern="[0-9]{10}" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" placeholder="గ్రూపింగ్ నంబర్">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">పార్టీ మొగ్గు (Party Alignment) *</label>
-                        <select id="form-party" required class="w-full p-2.5 border border-gray-300 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                            <option value="TDP-JanaSena" class="text-amber-600">తెలుగుదేశం - జనసేన కూటమి (Support)</option>
-                            <option value="YCP" class="text-blue-600">వైసీపీ (Opposition)</option>
-                            <option value="Neutral" class="text-gray-600">ఇతరులు / న్యూట్రల్ (Swing)</option>
+                        <label class="block font-semibold text-gray-600 mb-1">వార్డు (Col H)</label>
+                        <select id="fWard" class="w-full px-3 py-2 border rounded-lg bg-white">
+                            <option value="వార్డు 1">వార్డు 1</option>
+                            <option value="వార్డు 2">వార్డు 2</option>
+                            <option value="వార్డు 3">వార్డు 3</option>
+                            <option value="వార్డు 4">వార్డు 4</option>
+                            <option value="వార్డు 5">వార్డు 5</option>
+                            <option value="వార్డు 6">వార్డు 6</option>
+                            <option value="వార్డు 7">వార్డు 7</option>
+                            <option value="వార్డు 8">వార్డు 8</option>
+                            <option value="వార్డు 9">వార్డు 9</option>
+                            <option value="వార్డు 10">వార్డు 10</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">గ్రామంలో అందుబాటులో ఉన్నారా?</label>
-                        <select id="form-availability" onchange="toggleMigrationFields()" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm bg-white">
-                            <option value="Available">అవును (ఊర్లోనే ఉన్నారు)</option>
-                            <option value="NotAvailable">కాదు (ఊర్లో లేరు - Migrated)</option>
+                        <label class="block font-semibold text-gray-600 mb-1">బూత్ నెం (Col I)</label>
+                        <input type="text" id="fBooth" placeholder="బూత్ నెంబర్" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-600 mb-1">మద్దతు పార్టీ</label>
+                        <select id="fParty" class="w-full px-3 py-2 border rounded-lg bg-white">
+                            <option value="సర్వే కాలేదు">సర్వే కాలేదు (Pending)</option>
+                            <option value="టీడీపీ-జనసేన కూటమి">టీడీపీ-జనసేన కూటమి</option>
+                            <option value="వైయస్సార్సీపీ">వైయస్సార్సీపీ</option>
+                            <option value="న్యూట్రల్">న్యూట్రల్</option>
                         </select>
                     </div>
                 </div>
-
-                <div id="migration-box" class="hidden bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3">
-                    <h4 class="font-bold text-xs text-gray-700 uppercase tracking-wide">ప్రవాస వివరాలు (Migrated Details)</h4>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">ప్రస్తుతం ఉన్న నగరం / ఊరు</label>
-                            <input type="text" id="form-city" class="w-full p-2 border border-gray-300 rounded-lg text-sm bg-white" placeholder="ఉదా: హైదరాబాద్">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">ఫాలో-అప్ ప్రణాళిక / తేదీ</label>
-                            <input type="text" id="form-followup" class="w-full p-2 border border-gray-300 rounded-lg text-sm bg-white" placeholder="ఉదా: పోలింగ్ రోజుకి ముందు కాల్">
-                        </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-semibold text-gray-600 mb-1">లభ్యత / స్టేటస్</label>
+                        <select id="fAvailability" class="w-full px-3 py-2 border rounded-lg bg-white">
+                            <option value="అందుబాటులో ఉన్నారు">అందుబాటులో ఉన్నారు</option>
+                            <option value="ప్రవాస ఓటర్ (Migrated)">ప్రవాస ఓటర్ (Migrated)</option>
+                            <option value="డెత్ / మరణించారు (Excluded)">డెత్ / మరణించారు (Excluded)</option>
+                            <option value="ఓటు వేయడానికి రారు">ఓటు వేయడానికి రారు (Excluded)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-600 mb-1">వ్యక్తిగత మొబైల్ నెంబర్</label>
+                        <input type="text" id="fMobile" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500">
                     </div>
                 </div>
-
-                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3">
-                    <h4 class="font-bold text-xs text-gray-700 uppercase tracking-wide">సంక్షేమ పథకాలు & పెన్షన్ వివరాలు</h4>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">పెన్షన్ అందుతుందా?</label>
-                            <select id="form-pension" onchange="togglePensionDetails()" class="w-full p-2 border border-gray-300 rounded-lg text-sm bg-white">
-                                <option value="No">లేదు</option>
-                                <option value="Yes">అవును (వస్తుంది)</option>
-                            </select>
-                        </div>
-                        <div id="pension-type-box" class="hidden">
-                            <label class="block text-xs font-medium text-gray-600 mb-1">పెన్షన్ రకం & సంఖ్య</label>
-                            <input type="text" id="form-pension-type" class="w-full p-2 border border-gray-300 rounded-lg text-sm bg-white" placeholder="ఉదా: వృద్ధాప్య పెన్షన్">
-                        </div>
-                    </div>
+                <div>
+                    <label class="block font-semibold text-gray-600 mb-1">కుటుంబ పెద్ద మొబైల్ నెంబర్ (ఫ్యామిలీ గ్రూపింగ్)</label>
+                    <input type="text" id="fHeadMobile" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500">
                 </div>
-
-                <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                    <button type="button" onclick="closeAddVoterModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold transition">రద్దు చేయి</button>
-                    <button type="submit" class="px-6 py-2 bg-gradient-to-r from-amber-500 to-red-600 text-white rounded-lg text-sm font-bold shadow transition hover:opacity-90">సేవ్ చేయి</button>
+                <div class="pt-4 flex space-x-3">
+                    <button type="button" onclick="closeModal('addVoterModal')" class="flex-1 py-2.5 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300">రద్దు చేయి</button>
+                    <button type="submit" class="flex-1 py-2.5 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-700 shadow">సేవ్ చేయి</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Notification Toast -->
-    <div id="toast" class="fixed bottom-5 right-5 z-50 bg-gray-900 text-white px-5 py-3 rounded-xl shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 flex items-center space-x-3 text-sm">
-        <i id="toast-icon" class="fa-solid fa-circle-check text-green-400 text-lg"></i>
-        <span id="toast-message">సక్సెస్‌ఫుల్‌గా సేవ్ చేయబడింది!</span>
+    <!-- Add Ward Modal -->
+    <div id="addWardModal" class="fixed inset-0 z-50 bg-gray-900 bg-opacity-70 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <h3 class="text-lg font-bold text-gray-800">కొత్త వార్డు లేదా బూత్ జోడించు</h3>
+                <button onclick="closeModal('addWardModal')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="saveNewWard(event)" class="space-y-4 text-sm">
+                <div>
+                    <label class="block font-semibold text-gray-600 mb-1">వార్డు పేరు / నెంబర్</label>
+                    <input type="text" id="newWardName" required placeholder="ఉదా: వార్డు 11" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500">
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-700 shadow">వార్డును జోడించు</button>
+            </form>
+        </div>
     </div>
 
-    <!-- JavaScript Application Logic -->
+    <!-- Duplicate Voter Modal -->
+    <div id="duplicateModal" class="fixed inset-0 z-50 bg-gray-900 bg-opacity-70 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 max-h-[80vh] overflow-y-auto space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-lg font-bold text-gray-800">డూప్లికేట్ ఓటర్ల విశ్లేషణ</h3>
+                <button onclick="closeModal('duplicateModal')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div id="duplicateResultsContainer" class="space-y-3">
+                <!-- Dynamic Results -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Family Detail & Edit Modal -->
+    <div id="familyDetailModal" class="fixed inset-0 z-50 bg-gray-900 bg-opacity-70 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 id="familyModalHeader" class="text-lg font-bold text-gray-800">కుటుంబ ప్రోఫార్మా & సంక్షేమ వివరాలు</h3>
+                <button onclick="closeModal('familyDetailModal')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div id="familyModalBody" class="space-y-4 text-sm">
+                <!-- Dynamic Content -->
+            </div>
+
+            <div class="border-t pt-4">
+                <h4 class="font-bold text-gray-800 text-sm mb-2"><i class="fa-solid fa-plus-circle text-amber-600 mr-1"></i> కొత్త సంక్షేమ పథకం లేదా భవిష్యత్తు అవసరం జోడించు</h4>
+                <form onsubmit="saveFamilyWelfareOrNeed(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <input type="hidden" id="activeFamilyHeadMobile">
+                    <select id="newRecordType" class="px-3 py-2 border rounded-lg text-xs bg-white">
+                        <option value="scheme">సంక్షేమ పథకం / పెన్షన్</option>
+                        <option value="futureNeed">భవిష్యత్తు అవసరం / కోరిక</option>
+                        <option value="personalHelp">వ్యక్తిగత సహాయం</option>
+                        <option value="wardInfra">వార్డు ఇన్ఫ్రా (కొళాయి/రోడ్డు)</option>
+                    </select>
+                    <input type="text" id="newRecordText" required placeholder="వివరాలు ఇక్కడ రాయండి..." class="px-3 py-2 border rounded-lg text-xs">
+                    <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg text-xs py-2 shadow">సేవ్ చేయి</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden File Input for Excel Upload -->
+    <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" onchange="handleExcelUpload(event)" class="hidden">
+
+    <!-- Toast Notification -->
+    <div id="toastBox" class="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 flex items-center space-x-3">
+        <i class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toastText" class="text-sm font-medium">సక్సెస్</span>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
     <script>
-        const defaultVoters = [
-            {
-                id: "1",
-                name: "యలమంచిలి రామారావు",
-                guardian: "సూర్యనారాయణ",
-                voterId: "TBG01234567",
-                ward: "Ward 1",
-                houseNo: "1-22",
-                mobile: "9848012345",
-                familyHeadPhone: "9848012345",
-                age: 52,
-                gender: "Male",
-                party: "TDP-JanaSena",
-                availability: "Available",
-                city: "",
-                followup: "",
-                pension: "Yes",
-                pensionType: "వృద్ధాప్య పెన్షన్ (1)",
-                appPension: "Approved",
-                appSite: "None",
-                appBill: "Approved"
-            },
-            {
-                id: "2",
-                name: "కొత్తపల్లి లక్ష్మి",
-                guardian: "వెంకటేశ్వర్లు",
-                voterId: "TBG01234568",
-                ward: "Ward 1",
-                houseNo: "1-45",
-                mobile: "9988776655",
-                familyHeadPhone: "9848012345",
-                age: 45,
-                gender: "Female",
-                party: "TDP-JanaSena",
-                availability: "Available",
-                city: "",
-                followup: "",
-                pension: "Yes",
-                pensionType: "వితంతు పెన్షన్ (1)",
-                appPension: "None",
-                appSite: "Pending",
-                appBill: "None"
-            },
-            {
-                id: "3",
-                name: "షేక్ మస్తాన్ వలి",
-                guardian: "ఖాజా బాషా",
-                voterId: "TBG01234569",
-                ward: "Ward 2",
-                houseNo: "2-12",
-                mobile: "9700112233",
-                familyHeadPhone: "",
-                age: 38,
-                gender: "Male",
-                party: "YCP",
-                availability: "NotAvailable",
-                city: "హైదరాబాద్",
-                followup: "పోలింగ్ రోజుకి ముందు కాల్",
-                pension: "No",
-                pensionType: "",
-                appPension: "Pending",
-                appSite: "Approved",
-                appBill: "None"
-            }
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyD_7pTK1CQIp6n_nzHYnNy8oVC2e7AIXOMGNwC2sZygJ-Uz8b_97MZWsjGwWLx9A5h/exec";
+
+        let votersData = [
+            { id: 1, serial: "001", voterId: "TEL1234561", name: "వెంకట రావు నాయుడు", aadhaar: "", guardian: "అప్పల నాయుడు", house: "1-22", age: 52, gender: "పురుషులు", ward: "వార్డు 1", booth: "1", party: "టీడీపీ-జనసేన కూటమి", availability: "అందుబాటులో ఉన్నారు", mobile: "9848012345", headMobile: "9848012345", welfare: { pensions: "వృద్ధాప్య పెన్షన్", govt: "రైతు భరోసా", personal: "వైద్య సహాయం", infra: "సిసి రోడ్డు", futureNeeds: ["ఇంటి స్థలం"] }, migrantPlace: "" },
+            { id: 2, serial: "002", voterId: "TEL1234562", name: "మంగయమ్మ నాయుడు", aadhaar: "", guardian: "వెంకట రావు", house: "1-22", age: 48, gender: "స్త్రీలు", ward: "వార్డు 1", booth: "1", party: "సర్వే కాలేదు", availability: "అందుబాటులో ఉన్నారు", mobile: "", headMobile: "", welfare: { pensions: "ఆసరా పెన్షన్", govt: "అమ్మ ఒడి", personal: "లేదు", infra: "సిసి రోడ్డు", futureNeeds: ["మహిళా లోన్"] }, migrantPlace: "" },
+            { id: 3, serial: "003", voterId: "TEL9876541", name: "సత్యనారాయణ రెడ్డి", aadhaar: "", guardian: "చిన్న రెడ్డి", house: "2-45", age: 41, gender: "పురుషులు", ward: "వార్డు 2", booth: "1", party: "వైయస్సార్సీపీ", availability: "అందుబాటులో ఉన్నారు", mobile: "", headMobile: "", welfare: { pensions: "లేదు", govt: "చేయూత", personal: "సహాయం", infra: "కొళాయి", futureNeeds: ["డ్రైనేజీ"] }, migrantPlace: "" },
+            { id: 4, serial: "004", voterId: "TEL9876542", name: "లలిత రెడ్డి", aadhaar: "", guardian: "సత్యనారాయణ", house: "2-45", age: 38, gender: "స్త్రీలు", ward: "వార్డు 2", booth: "1", party: "సర్వే కాలేదు", availability: "అందుబాటులో ఉన్నారు", mobile: "", headMobile: "", welfare: { pensions: "లేదు", govt: "చేయూత", personal: "లేదు", infra: "కొళాయి", futureNeeds: [] }, migrantPlace: "" }
         ];
 
-        let familyRecords = {};
-        let voters = [];
-        let ivrLogs = [];
-        let activeSelectedFamilyPhone = null;
-        let googleScriptUrl = localStorage.getItem('gsm_google_script_url') || '';
-        let transliterationActive = true;
+        let wardsList = ["వార్డు 1", "వార్డు 2", "వార్డు 3", "వార్డు 4", "వార్డు 5", "వార్డు 6", "వార్డు 7", "వార్డు 8", "వార్డు 9", "వార్డు 10"];
+        let pieChartInstance = null;
 
-        // Initialize Google Transliteration API
-        google.load("elements", "1", {
-            packages: "transliteration"
-        });
-
-        function onLoadTransliteration() {
-            try {
-                const options = {
-                    sourceLanguage: 'en',
-                    destinationLanguage: ['te'],
-                    shortcutKey: 'ctrl+g',
-                    transliterationEnabled: true
-                };
-                var control = new google.elements.transliteration.TransliterationControl(options);
-                control.makeTransliteratable(['form-name', 'form-guardian', 'form-city']);
-            } catch (err) {
-                console.log("Transliteration load note:", err);
-            }
-        }
-        google.setOnLoadCallback(onLoadTransliteration);
-
-        function toggleTransliteration() {
-            transliterationActive = !transliterationActive;
-            const btn = document.getElementById('transliteration-toggle');
-            if (transliterationActive) {
-                btn.innerText = "ట్రాన్స్‌లిటరేషన్: ఆన్";
-                btn.className = "bg-amber-600 text-white px-2.5 py-1 rounded font-bold text-[11px]";
-                showToast("తెలుగు టైపింగ్ (Transliteration) ఆన్ చేయబడింది");
-            } else {
-                btn.innerText = "ట్రాన్స్‌లిటరేషన్: ఆఫ్ (కాపీ/పేస్ట్ ఈజీ)";
-                btn.className = "bg-gray-600 text-white px-2.5 py-1 rounded font-bold text-[11px]";
-                showToast("ఇప్పుడు మీరు ఎక్కడి నుంచైనా డైరెక్ట్ కాపీ-పేస్ట్ చేసుకోవచ్చు");
-            }
-        }
-
-        window.onload = function() {
-            if(googleScriptUrl) {
-                document.getElementById('gsm-script-url').value = googleScriptUrl;
-            }
-
-            const savedVoters = localStorage.getItem('panchayat_voters_gsheet');
-            if (savedVoters) {
-                voters = JSON.parse(savedVoters);
-            } else {
-                voters = defaultVoters;
-                saveToLocalStorage();
-            }
-
-            const savedFamilyRecords = localStorage.getItem('panchayat_family_records_gsheet');
-            if (savedFamilyRecords) {
-                familyRecords = JSON.parse(savedFamilyRecords);
-            }
-
-            updateDashboard();
+        function initApp() {
+            updateDashboardMetrics();
+            renderWardAnalysisTable();
             renderVotersTable();
+            renderFamilyList();
             renderWelfareTable();
             renderMigratedTable();
-            populateIVRDropdown();
-            renderFamilyList();
-        };
-
-        function saveToLocalStorage() {
-            localStorage.setItem('panchayat_voters_gsheet', JSON.stringify(voters));
-            localStorage.setItem('panchayat_family_records_gsheet', JSON.stringify(familyRecords));
+            initDashboardChart();
+            syncWithGoogleSheet(true);
         }
 
-        function saveGoogleScriptUrl() {
-            const url = document.getElementById('gsm-script-url').value.trim();
-            if(!url) {
-                alert("దయచేసి సరైన Google Apps Script URL ని ఇవ్వండి.");
-                return;
-            }
-            googleScriptUrl = url;
-            localStorage.setItem('gsm_google_script_url', url);
-            showToast("Google Sheet URL విజయవంతంగా సేవ్ చేయబడింది!");
-        }
-
-        async function syncToGoogleSheet() {
-            if(!googleScriptUrl) {
-                switchTab('settings');
-                return;
-            }
-            showToast("గూగుల్ షీట్‌కు డేటా సింక్ అవుతోంది...");
+        async function syncWithGoogleSheet(isSilent = false) {
+            if(!isSilent) showToast("గూగుల్ షీట్ నుండి డేటా సింక్ అవుతోంది...", "info");
             try {
-                await fetch(googleScriptUrl, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'syncVoters', voters: voters })
-                });
-                showToast("డేటా విజయవంతంగా గూగుల్ షీట్‌కు పంపబడింది!");
-            } catch (error) {
-                showToast("సింక్ అయింది.");
-            }
-        }
-
-        async function fetchFromGoogleSheet() {
-            if(!googleScriptUrl) {
-                switchTab('settings');
-                return;
-            }
-            showToast("గూగుల్ షీట్ నుండి డేటా తెచ్చుకుంటోంది...");
-            try {
-                const response = await fetch(googleScriptUrl + '?action=getVoters');
+                const response = await fetch(GOOGLE_SCRIPT_URL + "?action=getData");
                 const result = await response.json();
-                if(result && Array.isArray(result.voters)) {
-                    voters = result.voters;
-                    saveToLocalStorage();
-                    updateDashboard();
-                    renderVotersTable();
-                    renderWelfareTable();
-                    renderMigratedTable();
-                    populateIVRDropdown();
-                    renderFamilyList();
-                    showToast("డేటా సక్సెస్‌ఫుల్‌గా లోడ్ అయింది!");
+                if(Array.isArray(result) && result.length > 0) {
+                    votersData = result.map((row, idx) => {
+                        let rawGender = String(row.Gender || row.gender || 'పురుషులు').trim();
+                        let genderNormalized = 'పురుషులు';
+                        if(rawGender.toLowerCase().includes('female') || rawGender.includes('స్త్రీ') || rawGender.includes('మహిళ') || rawGender === 'F' || rawGender === '2') {
+                            genderNormalized = 'స్త్రీలు';
+                        }
+
+                        let rawWard = String(row.Ward_No || row.Ward || row.ward || 'వార్డు 1').trim();
+                        let wardNormalized = rawWard.includes('వార్డు') ? rawWard : `వార్డు ${rawWard}`;
+                        let rawBooth = String(row.Booth_No || row.Booth || row.booth || '1').trim();
+
+                        let rawParty = String(row.Support_Party || row.SupportParty || '').trim();
+                        if(!rawParty || rawParty === 'undefined' || rawParty === 'null' || rawParty === '') {
+                            rawParty = 'సర్వే కాలేదు';
+                        }
+
+                        return {
+                            id: idx + 1,
+                            serial: String(row.Serial_No || row.SerialNo || (idx + 1)),
+                            voterId: String(row.Voter_ID || row.VoterID || 'TEL' + idx),
+                            name: String(row.Voter_Name || row.Name || 'పేరు లేదు'),
+                            guardian: String(row.Guardian_Name || row.FatherName || ''),
+                            aadhaar: String(row.Aadhaar_No || row.Aadhaar || ''),
+                            house: String(row.House_No || row.HouseNo || '1-1'),
+                            age: Number(row.Age || 30),
+                            gender: genderNormalized,
+                            ward: wardNormalized,
+                            booth: rawBooth,
+                            party: rawParty,
+                            availability: String(row.Availability_Status || row.Availability || 'అందుబాటులో ఉన్నారు'),
+                            mobile: String(row.Mobile_No || row.Mobile || ''),
+                            headMobile: String(row.Family_Head_Mobile || row.FamilyHeadMobile || ''),
+                            welfare: { pensions: String(row.Welfare_Schemes || 'నమోదు చేయాలి'), govt: '', personal: '', infra: '', futureNeeds: row.Future_Requests ? [row.Future_Requests] : [] },
+                            migrantPlace: String(row.Migrated_Location || '')
+                        };
+                    });
+                    initApp();
+                    if(!isSilent) showToast("గూగుల్ షీట్ తో డేటా విజయవంతంగా సింక్ చేయబడింది!", "success");
                 }
-            } catch (error) {
-                showToast("డేటా తెచ్చుకోవడంలో సమస్య.");
+            } catch(err) {
+                console.error("Sync Error:", err);
+                if(!isSilent) showToast("గూగుల్ షీట్ కనెక్షన్‌లో లోపం ఏర్పడింది.", "error");
             }
         }
 
-        function resetDefaultData() {
-            if(confirm("మీరు శాంపిల్ డేటాను రీసెట్ చేయాలనుకుంటున్నారా?")) {
-                voters = defaultVoters;
-                saveToLocalStorage();
-                updateDashboard();
-                renderVotersTable();
-                renderWelfareTable();
-                renderMigratedTable();
-                populateIVRDropdown();
-                renderFamilyList();
-                showToast("డేటా రీసెట్ చేయబడింది!");
+        async function updateVoterToGoogleSheet(voter) {
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        action: "updateVoter",
+                        Voter_ID: voter.voterId,
+                        Support_Party: voter.party,
+                        Availability_Status: voter.availability,
+                        Migrated_Location: voter.migrantPlace,
+                        Mobile_No: voter.mobile,
+                        Family_Head_Mobile: voter.headMobile,
+                        Aadhaar_No: voter.aadhaar,
+                        Welfare_Schemes: voter.welfare?.pensions || '',
+                        Future_Requests: (voter.welfare?.futureNeeds || []).join(', ')
+                    })
+                });
+            } catch(err) {
+                console.error("POST Error:", err);
             }
         }
 
         function switchTab(tabId) {
-            document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('border-yellow-500', 'text-amber-600');
-                btn.classList.add('border-transparent', 'text-gray-600');
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => {
+                el.classList.remove('bg-white', 'text-amber-800', 'shadow');
+                el.classList.add('text-amber-100', 'hover:bg-amber-600');
             });
 
-            document.getElementById('tab-' + tabId).classList.remove('hidden');
-            const activeBtn = document.getElementById('nav-' + tabId);
-            activeBtn.classList.add('border-yellow-500', 'text-amber-600');
-            activeBtn.classList.remove('border-transparent', 'text-gray-600');
+            document.getElementById('tab-' + tabId).classList.add('active');
+            const activeBtn = document.querySelector(`.nav-btn[data-target="${tabId}"]`);
+            if(activeBtn) {
+                activeBtn.classList.add('bg-white', 'text-amber-800', 'shadow');
+                activeBtn.classList.remove('text-amber-100', 'hover:bg-amber-600');
+            }
 
-            if(tabId === 'dashboard') updateDashboard();
-            if(tabId === 'voters') renderVotersTable();
-            if(tabId === 'families') renderFamilyList();
-            if(tabId === 'welfare') renderWelfareTable();
-            if(tabId === 'migrated') renderMigratedTable();
-            if(tabId === 'ivr') populateIVRDropdown();
+            if(tabId === 'dashboard') {
+                updateDashboardMetrics();
+                renderWardAnalysisTable();
+                initDashboardChart();
+            } else if(tabId === 'families') {
+                renderFamilyList();
+            } else if(tabId === 'welfare') {
+                renderWelfareTable();
+            } else if(tabId === 'migrated') {
+                renderMigratedTable();
+            }
         }
 
-        function filterByPartyCard(partyKey) {
+        function isDeathOrRefusal(v) {
+            const avail = (v.availability || '').toLowerCase();
+            return avail.includes('డెత్') || avail.includes('మరణించారు') || avail.includes('రారు');
+        }
+
+        function isMale(v) {
+            const g = (v.gender || '').trim().toLowerCase();
+            return g.includes('పురుషు') || g === 'male' || g === 'm' || g === '1';
+        }
+
+        function isFemale(v) {
+            const g = (v.gender || '').trim().toLowerCase();
+            return g.includes('స్త్రీ') || g.includes('మహిళ') || g === 'female' || g === 'f' || g === '2';
+        }
+
+        function updateDashboardMetrics() {
+            const total = votersData.length;
+            const maleTotal = votersData.filter(isMale).length;
+            const femaleTotal = votersData.filter(isFemale).length;
+            const calcPct = (part, whole) => whole > 0 ? ((part / whole) * 100).toFixed(1) + '%' : '0%';
+
+            const deathVoters = votersData.filter(isDeathOrRefusal);
+            const deathMale = deathVoters.filter(isMale).length;
+            const deathFemale = deathVoters.filter(isFemale).length;
+
+            const eligibleVoters = votersData.filter(v => !isDeathOrRefusal(v));
+
+            const allianceVoters = eligibleVoters.filter(v => v.party === 'టీడీపీ-జనసేన కూటమి');
+            const allianceMale = allianceVoters.filter(isMale).length;
+            const allianceFemale = allianceVoters.filter(isFemale).length;
+
+            const ysrcpVoters = eligibleVoters.filter(v => v.party === 'వైయస్సార్సీపీ');
+            const ysrcpMale = ysrcpVoters.filter(isMale).length;
+            const ysrcpFemale = ysrcpVoters.filter(isFemale).length;
+
+            const neutralVoters = eligibleVoters.filter(v => v.party === 'న్యూట్రల్');
+            const neutralMale = neutralVoters.filter(isMale).length;
+            const neutralFemale = neutralVoters.filter(isFemale).length;
+
+            const pendingVoters = eligibleVoters.filter(v => !v.party || v.party === 'సర్వే కాలేదు' || v.party === '');
+            const pendingMale = pendingVoters.filter(isMale).length;
+            const pendingFemale = pendingVoters.filter(isFemale).length;
+
+            const migratedVoters = eligibleVoters.filter(v => v.availability.includes('ప్రవాస') || v.migrantPlace);
+            const migratedMale = migratedVoters.filter(isMale).length;
+            const migratedFemale = migratedVoters.filter(isFemale).length;
+
+            document.getElementById('metricTotalVoters').innerText = total;
+            document.getElementById('metricTotalMale').innerText = `${maleTotal} (${calcPct(maleTotal, total)})`;
+            document.getElementById('metricTotalFemale').innerText = `${femaleTotal} (${calcPct(femaleTotal, total)})`;
+
+            document.getElementById('metricAlliance').innerText = allianceVoters.length;
+            document.getElementById('metricAllianceMale').innerText = `${allianceMale} (${calcPct(allianceMale, allianceVoters.length)})`;
+            document.getElementById('metricAllianceFemale').innerText = `${allianceFemale} (${calcPct(allianceFemale, allianceVoters.length)})`;
+            document.getElementById('metricAlliancePerc').innerText = calcPct(allianceVoters.length, eligibleVoters.length) + ' మద్దతు';
+
+            document.getElementById('metricYsrcp').innerText = ysrcpVoters.length;
+            document.getElementById('metricYsrcpMale').innerText = `${ysrcpMale} (${calcPct(ysrcpMale, ysrcpVoters.length)})`;
+            document.getElementById('metricYsrcpFemale').innerText = `${ysrcpFemale} (${calcPct(ysrcpFemale, ysrcpVoters.length)})`;
+            document.getElementById('metricYsrcpPerc').innerText = calcPct(ysrcpVoters.length, eligibleVoters.length) + ' మద్దతు';
+
+            document.getElementById('metricNeutral').innerText = neutralVoters.length;
+            document.getElementById('metricNeutralMale').innerText = `${neutralMale} (${calcPct(neutralMale, neutralVoters.length)})`;
+            document.getElementById('metricNeutralFemale').innerText = `${neutralFemale} (${calcPct(neutralFemale, neutralVoters.length)})`;
+            document.getElementById('metricNeutralPerc').innerText = calcPct(neutralVoters.length, eligibleVoters.length) + ' ఓట్లు';
+
+            document.getElementById('metricPending').innerText = pendingVoters.length;
+            document.getElementById('metricPendingMale').innerText = `${pendingMale} (${calcPct(pendingMale, pendingVoters.length)})`;
+            document.getElementById('metricPendingFemale').innerText = `${pendingFemale} (${calcPct(pendingFemale, pendingVoters.length)})`;
+            document.getElementById('metricPendingPerc').innerText = calcPct(pendingVoters.length, eligibleVoters.length) + ' పెండింగ్';
+
+            document.getElementById('metricDeath').innerText = deathVoters.length;
+            document.getElementById('metricDeathMale').innerText = `${deathMale}`;
+            document.getElementById('metricDeathFemale').innerText = `${deathFemale}`;
+
+            document.getElementById('metricMigrated').innerText = migratedVoters.length;
+            document.getElementById('metricMigratedMale').innerText = `${migratedMale} (${calcPct(migratedMale, migratedVoters.length)})`;
+            document.getElementById('metricMigratedFemale').innerText = `${migratedFemale} (${calcPct(migratedFemale, migratedVoters.length)})`;
+        }
+
+        function filterDashboardCard(type, wardName = null) {
             switchTab('voters');
-            document.getElementById('filter-party').value = partyKey;
-            filterVoters();
-        }
-
-        function updateDashboard() {
-            const total = voters.length;
-            const tdpCount = voters.filter(v => v.party === 'TDP-JanaSena').length;
-            const ycpCount = voters.filter(v => v.party === 'YCP').length;
-            const neutralCount = voters.filter(v => v.party === 'Neutral').length;
-            const pensionerCount = voters.filter(v => v.pension === 'Yes').length;
-            const migratedCount = voters.filter(v => v.availability === 'NotAvailable').length;
-            
-            const pendingAppCount = voters.filter(v => 
-                v.appPension === 'Pending' || v.appSite === 'Pending' || v.appBill === 'Pending'
-            ).length;
-
-            document.getElementById('stat-total').innerText = total;
-            document.getElementById('stat-tdp').innerText = tdpCount;
-            document.getElementById('stat-ycp').innerText = ycpCount;
-            document.getElementById('stat-neutral').innerText = neutralCount;
-            document.getElementById('stat-pensioners').innerText = pensionerCount;
-            document.getElementById('stat-migrated').innerText = migratedCount;
-            document.getElementById('stat-applications').innerText = pendingAppCount;
-
-            if(total > 0) {
-                document.getElementById('stat-tdp-percent').innerText = Math.round((tdpCount/total)*100) + '% మద్దతు';
-                document.getElementById('stat-ycp-percent').innerText = Math.round((ycpCount/total)*100) + '% మద్దతు';
-                document.getElementById('stat-neutral-percent').innerText = Math.round((neutralCount/total)*100) + '% మద్దతు';
+            if (wardName) {
+                document.getElementById('filterWard').value = wardName;
+            } else {
+                document.getElementById('filterWard').value = '';
             }
 
-            const wardTable = document.getElementById('ward-summary-table');
-            wardTable.innerHTML = '';
-            for(let i=1; i<=10; i++) {
-                const wardName = `Ward ${i}`;
-                const wardVoters = voters.filter(v => v.ward === wardName);
-                const wTotal = wardVoters.length;
-                const wTdp = wardVoters.filter(v => v.party === 'TDP-JanaSena').length;
-                const wYcp = wardVoters.filter(v => v.party === 'YCP').length;
-                const wNeutral = wardVoters.filter(v => v.party === 'Neutral').length;
-
-                let leading = '<span class="text-gray-400">-</span>';
-                if(wTdp > wYcp) leading = '<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-xs font-bold">టీడీపీ-జనసేన లీడ్</span>';
-                else if(wYcp > wTdp) leading = '<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs font-bold">వైసీపీ లీడ్</span>';
-                else if(wTotal > 0) leading = '<span class="bg-gray-100 text-gray-800 px-2 py-0.5 rounded text-xs font-bold">హోరాహోరీ</span>';
-
-                wardTable.innerHTML += `
-                    <tr class="hover:bg-gray-50">
-                        <td class="p-3 font-semibold text-gray-700">వార్డు ${i}</td>
-                        <td class="p-3 font-bold">${wTotal}</td>
-                        <td class="p-3 text-amber-600 font-semibold">${wTdp}</td>
-                        <td class="p-3 text-blue-600 font-semibold">${wYcp}</td>
-                        <td class="p-3 text-gray-600">${wNeutral}</td>
-                        <td class="p-3">${leading}</td>
-                    </tr>
-                `;
+            if (type === 'all') {
+                document.getElementById('filterParty').value = '';
+            } else if (type === 'టీడీపీ-జనసేన కూటమి') {
+                document.getElementById('filterParty').value = 'టీడీపీ-జనసేన కూటమి';
+            } else if (type === 'వైయస్సార్సీపీ') {
+                document.getElementById('filterParty').value = 'వైయస్సార్సీపీ';
+            } else if (type === 'న్యూట్రల్') {
+                document.getElementById('filterParty').value = 'న్యూట్రల్';
+            } else if (type === 'సర్వే కాలేదు') {
+                document.getElementById('filterParty').value = 'సర్వే కాలేదు';
+            } else if (type === 'డెత్') {
+                document.getElementById('filterParty').value = 'డెత్';
+            } else if (type === 'migrated') {
+                document.getElementById('filterParty').value = '';
+                renderVotersTable(v => v.availability.includes('ప్రవాస') || v.migrantPlace);
+                return;
             }
+            renderVotersTable();
         }
 
-        function renderVotersTable(filteredList = null) {
-            const list = filteredList || voters;
-            const tbody = document.getElementById('voters-table-body');
+        function renderWardAnalysisTable() {
+            const tbody = document.getElementById('wardAnalysisTableBody');
             tbody.innerHTML = '';
 
-            if(list.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-gray-400">ఓటర్ల డేటా ఏదీ కనుగొనబడలేదు.</td></tr>`;
-                document.getElementById('voters-count-display').innerText = `మొత్తం ఓటర్లు: 0`;
+            wardsList.forEach(ward => {
+                const wardAll = votersData.filter(v => v.ward === ward);
+                const wardEligible = wardAll.filter(v => !isDeathOrRefusal(v));
+
+                const totalM = wardAll.filter(isMale).length;
+                const totalF = wardAll.filter(isFemale).length;
+                const totalW = wardAll.length;
+                const calcPct = (p, w) => w > 0 ? ((p / w) * 100).toFixed(1) + '%' : '0%';
+                
+                const allianceVoters = wardEligible.filter(v => v.party === 'టీడీపీ-జనసేన కూటమి');
+                const allianceM = allianceVoters.filter(isMale).length;
+                const allianceF = allianceVoters.filter(isFemale).length;
+                const allianceW = allianceVoters.length;
+
+                const ysrcpVoters = wardEligible.filter(v => v.party === 'వైయస్సార్సీపీ');
+                const ysrcpM = ysrcpVoters.filter(isMale).length;
+                const ysrcpF = ysrcpVoters.filter(isFemale).length;
+                const ysrcpW = ysrcpVoters.length;
+
+                const neutral = wardEligible.filter(v => v.party === 'న్యూట్రల్').length;
+                const pending = wardEligible.filter(v => !v.party || v.party === 'సర్వే కాలేదు' || v.party === '').length;
+
+                let leading = 'సమం (Tie)';
+                let badgeColor = 'bg-gray-100 text-gray-700';
+                let leadMargin = 0;
+
+                if(allianceW > ysrcpW) {
+                    leadMargin = allianceW - ysrcpW;
+                    leading = `కూటమి (+${leadMargin} ఓట్లు)`;
+                    badgeColor = 'bg-orange-100 text-orange-700 font-bold';
+                } else if(ysrcpW > allianceW) {
+                    leadMargin = ysrcpW - allianceW;
+                    leading = `వైయస్సార్సీపీ (+${leadMargin} ఓట్లు)`;
+                    badgeColor = 'bg-blue-100 text-blue-700 font-bold';
+                } else {
+                    leading = 'సమం (Tie)';
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition border-b border-gray-100 text-xs";
+                tr.innerHTML = `
+                    <td class="p-3 font-bold text-gray-800 text-sm cursor-pointer text-amber-700 hover:underline" onclick="filterDashboardCard('all', '${ward}')">${ward}</td>
+                    <td class="p-3"><b>${totalW}</b> <span class="text-gray-500">(పు:${totalM}[${calcPct(totalM, totalW)}]|స్త్రీ:${totalF}[${calcPct(totalF, totalW)}])</span></td>
+                    <td class="p-3 text-orange-600 font-semibold cursor-pointer hover:underline" onclick="filterDashboardCard('టీడీపీ-జనసేన కూటమి', '${ward}')"><b>${allianceW}</b> <span class="text-gray-500">(పు:${allianceM}|స్త్రీ:${allianceF})</span></td>
+                    <td class="p-3 text-blue-600 font-semibold cursor-pointer hover:underline" onclick="filterDashboardCard('వైయస్సార్సీపీ', '${ward}')"><b>${ysrcpW}</b> <span class="text-gray-500">(పు:${ysrcpM}|స్త్రీ:${ysrcpF})</span></td>
+                    <td class="p-3 text-gray-600 cursor-pointer hover:underline" onclick="filterDashboardCard('న్యూట్రల్', '${ward}')">${neutral}</td>
+                    <td class="p-3 text-amber-600 font-bold cursor-pointer hover:underline bg-amber-50/50 rounded" onclick="filterDashboardCard('సర్వే కాలేదు', '${ward}')">${pending} (చూడండి)</td>
+                    <td class="p-3"><span class="px-2.5 py-1 rounded-full text-xs ${badgeColor}">${leading}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function initDashboardChart() {
+            const activeVoters = votersData.filter(v => !isDeathOrRefusal(v));
+            const alliance = activeVoters.filter(v => v.party === 'టీడీపీ-జనసేన కూటమి').length;
+            const ysrcp = activeVoters.filter(v => v.party === 'వైయస్సార్సీపీ').length;
+            const neutral = activeVoters.filter(v => v.party === 'న్యూట్రల్').length;
+            const pending = activeVoters.filter(v => !v.party || v.party === 'సర్వే కాలేదు' || v.party === '').length;
+
+            const ctx = document.getElementById('dashboardPieChart').getContext('2d');
+            if(pieChartInstance) pieChartInstance.destroy();
+            pieChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['టీడీపీ-జనసేన కూటమి', 'వైయస్సార్సీపీ', 'న్యూట్రల్', 'సర్వే కానివి'],
+                    datasets: [{
+                        data: [alliance, ysrcp, neutral, pending],
+                        backgroundColor: ['#f97316', '#2563eb', '#6b7280', '#f59e0b'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        function renderVotersTable(customFilterFn = null) {
+            const query = document.getElementById('voterSearchInput').value.toLowerCase();
+            const wardFilter = document.getElementById('filterWard').value;
+            const partyFilter = document.getElementById('filterParty').value;
+
+            const tbody = document.getElementById('votersTableBody');
+            tbody.innerHTML = '';
+
+            const filtered = votersData.filter(v => {
+                const matchQuery = v.name.toLowerCase().includes(query) || v.voterId.toLowerCase().includes(query) || v.house.toLowerCase().includes(query) || v.mobile.includes(query) || (v.aadhaar && v.aadhaar.includes(query));
+                const matchWard = !wardFilter || v.ward === wardFilter;
+                
+                let matchParty = true;
+                if (partyFilter) {
+                    if (partyFilter === 'సర్వే కాలేదు') {
+                        matchParty = (!v.party || v.party === 'సర్వే కాలేదు' || v.party === '') && !isDeathOrRefusal(v);
+                    } else if (partyFilter === 'డెత్') {
+                        matchParty = isDeathOrRefusal(v);
+                    } else {
+                        matchParty = (v.party === partyFilter);
+                    }
+                }
+
+                let passCustom = true;
+                if(customFilterFn) passCustom = customFilterFn(v);
+                return matchQuery && matchWard && matchParty && passCustom;
+            });
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-gray-400">ఓటర్ల వివరాలు కనుగొనబడలేదు.</td></tr>`;
                 return;
             }
 
-            list.forEach(v => {
+            filtered.forEach(v => {
                 let partyBadge = '';
-                if(v.party === 'TDP-JanaSena') partyBadge = `<span class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full text-xs font-bold border border-amber-200">టీడీపీ-జనసేన</span>`;
-                else if(v.party === 'YCP') partyBadge = `<span class="bg-blue-100 text-blue-800 px-2.5 py-1 rounded-full text-xs font-bold border border-blue-200">వైసీపీ</span>`;
-                else partyBadge = `<span class="bg-gray-100 text-gray-800 px-2.5 py-1 rounded-full text-xs font-bold border border-gray-200">న్యూట్రల్</span>`;
+                if(v.party === 'టీడీపీ-జనసేన కూటమి') partyBadge = '<span class="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full text-xs font-semibold">టీడీపీ-జనసేన కూటమి</span>';
+                else if(v.party === 'వైయస్సార్సీపీ') partyBadge = '<span class="bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full text-xs font-semibold">వైయస్సార్సీపీ</span>';
+                else if(v.party === 'న్యూట్రల్') partyBadge = '<span class="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full text-xs font-semibold">న్యూట్రల్</span>';
+                else partyBadge = '<span class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full text-xs font-semibold">సర్వే కాలేదు (Pending)</span>';
 
-                let pensionBadge = v.pension === 'Yes' ? 
-                    `<span class="text-green-700 bg-green-50 px-2 py-0.5 rounded text-xs font-semibold"><i class="fa-solid fa-check mr-1"></i> పెన్షన్ ఉంది</span>` : 
-                    `<span class="text-gray-500 bg-gray-100 px-2 py-0.5 rounded text-xs">పెన్షన్ లేదు</span>`;
+                let availBadge = `<span class="text-emerald-600 font-medium text-xs"><i class="fa-solid fa-circle-check mr-1"></i>${v.availability}</span>`;
+                if(v.availability.includes('డెత్') || v.availability.includes('మరణించారు')) availBadge = `<span class="text-red-600 font-medium text-xs"><i class="fa-solid fa-user-slash mr-1"></i>డెత్ (సెపరేట్)</span>`;
+                else if(v.availability.includes('ప్రవాస')) availBadge = `<span class="text-indigo-600 font-medium text-xs"><i class="fa-solid fa-plane mr-1"></i>ప్రవాస ఓటర్</span>`;
+                else if(v.availability.includes('రారు')) availBadge = `<span class="text-gray-500 font-medium text-xs"><i class="fa-solid fa-ban mr-1"></i>రారు (Excluded)</span>`;
 
-                let availBadge = v.availability === 'Available' ?
-                    `<span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-xs"><i class="fa-solid fa-house-chimney mr-1"></i> ఊర్లోనే ఉన్నారు</span>` :
-                    `<span class="text-purple-700 bg-purple-50 px-2 py-0.5 rounded text-xs"><i class="fa-solid fa-plane mr-1"></i> ఊర్లో లేరు (${v.city || 'బైట'})</span>`;
+                const isRedFlag = !v.mobile || !v.headMobile || isDeathOrRefusal(v);
+                const rowBorder = isRedFlag ? 'border-l-4 border-l-red-500 bg-red-50/20' : '';
 
-                let groupDisplay = v.familyHeadPhone && !v.familyHeadPhone.startsWith('NoGroup_') ? 
-                    `<span class="text-indigo-700 font-semibold"><i class="fa-solid fa-people-group text-xs mr-1"></i> ${v.familyHeadPhone}</span>` : 
-                    `<span class="text-red-600 bg-red-50 px-2 py-0.5 rounded text-[11px] font-bold">గ్రూప్ లేదు (Separated)</span>`;
-
-                tbody.innerHTML += `
-                    <tr class="hover:bg-gray-50 transition border-b border-gray-100">
-                        <td class="p-3">
-                            <div class="font-bold text-gray-800">${v.name}</div>
-                            <div class="text-xs text-gray-500">తండ్రి/భర్త: ${v.guardian || '-'} | వయస్సు: ${v.age || '-'}</div>
-                        </td>
-                        <td class="p-3 font-mono text-xs font-semibold text-gray-700">${v.voterId || '-'}</td>
-                        <td class="p-3">
-                            <div class="font-semibold text-gray-700">${v.ward}</div>
-                            <div class="text-xs text-gray-500">ఇల్లు నెం: ${v.houseNo || '-'}</div>
-                        </td>
-                        <td class="p-3 font-medium text-gray-700">
-                            ${v.mobile ? `<a href="tel:${v.mobile}" class="text-blue-600 hover:underline"><i class="fa-solid fa-phone text-xs mr-1"></i> ${v.mobile}</a>` : '<span class="text-gray-400 text-xs">నెంబర్ లేదు</span>'}
-                        </td>
-                        <td class="p-3">${groupDisplay}</td>
-                        <td class="p-3">${partyBadge}</td>
-                        <td class="p-3">${pensionBadge}</td>
-                        <td class="p-3">${availBadge}</td>
-                        <td class="p-3 text-center space-x-1">
-                            <button onclick="editVoter('${v.id}')" class="text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg transition" title="సవరించు"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <button onclick="deleteVoter('${v.id}')" class="text-red-600 hover:bg-red-50 p-1.5 rounded-lg transition" title="తొలగించు"><i class="fa-solid fa-trash"></i></button>
-                        </td>
-                    </tr>
+                const tr = document.createElement('tr');
+                tr.className = `hover:bg-gray-50 transition border-b border-gray-100 ${rowBorder}`;
+                tr.innerHTML = `
+                    <td class="p-3.5 font-semibold text-gray-700">${v.serial}<br><span class="text-xs text-gray-400 font-normal">${v.voterId}</span></td>
+                    <td class="p-3.5">
+                        <div class="font-bold text-gray-900 flex items-center">
+                            ${v.name}
+                            ${isDeathOrRefusal(v) ? '<span class="ml-2 text-red-600 text-xs font-bold" title="సర్వేకు పరిగణించబడదు">[డెత్ / రారు]</span>' : ''}
+                        </div>
+                        <div class="text-xs text-gray-500">ఆధార్: ${v.aadhaar || '<span class="text-amber-600 font-semibold">పెండింగ్</span>'}</div>
+                    </td>
+                    <td class="p-3.5">
+                        <div class="font-medium text-gray-800">ఇల్లు: ${v.house}</div>
+                        <div class="text-xs text-amber-600 font-semibold">${v.ward} (బూత్: ${v.booth})</div>
+                    </td>
+                    <td class="p-3.5 text-xs text-gray-600">${v.age} ఏళ్లు / <b class="${isMale(v) ? 'text-blue-700' : 'text-pink-600'}">${v.gender}</b></td>
+                    <td class="p-3.5">${partyBadge}</td>
+                    <td class="p-3.5">${availBadge}</td>
+                    <td class="p-3.5 text-xs">
+                        <div><i class="fa-solid fa-phone text-gray-400 mr-1"></i>${v.mobile || '<span class="text-red-600 font-bold">లేదు</span>'}</div>
+                        <div class="text-gray-500 mt-0.5">హెడ్: ${v.headMobile || '<span class="text-red-600 font-bold">లేదు</span>'}</div>
+                    </td>
+                    <td class="p-3.5 text-center space-x-2">
+                        <button onclick="editVoter(${v.id})" class="text-amber-600 hover:text-amber-800 p-1" title="ఎడిట్"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteVoter(${v.id})" class="text-red-600 hover:text-red-800 p-1" title="డిలీట్"><i class="fa-solid fa-trash"></i></button>
+                    </td>
                 `;
+                tbody.appendChild(tr);
             });
-
-            document.getElementById('voters-count-display').innerText = `మొత్తం ఓటర్లు చూపబడుతున్నాయి: ${list.length} / ${voters.length}`;
         }
 
-        function filterVoters() {
-            const query = document.getElementById('search-input').value.toLowerCase();
-            const party = document.getElementById('filter-party').value;
-            const ward = document.getElementById('filter-ward').value;
-            const pension = document.getElementById('filter-pension').value;
-            const availability = document.getElementById('filter-availability').value;
-            const groupingStatus = document.getElementById('filter-grouping').value;
-
-            const filtered = voters.filter(v => {
-                const matchQuery = v.name.toLowerCase().includes(query) || (v.mobile && v.mobile.includes(query)) || (v.houseNo && v.houseNo.toLowerCase().includes(query)) || (v.voterId && v.voterId.toLowerCase().includes(query));
-                const matchParty = party ? v.party === party : true;
-                const matchWard = ward ? v.ward === ward : true;
-                const matchPension = pension ? v.pension === pension : true;
-                const matchAvailability = availability ? v.availability === availability : true;
-                
-                let matchGrouping = true;
-                if (groupingStatus === 'HasGroup') {
-                    matchGrouping = v.familyHeadPhone && !v.familyHeadPhone.startsWith('NoGroup_');
-                } else if (groupingStatus === 'NoGroup') {
-                    matchGrouping = !v.familyHeadPhone || v.familyHeadPhone.startsWith('NoGroup_');
-                }
-
-                return matchQuery && matchParty && matchWard && matchPension && matchAvailability && matchGrouping;
-            });
-
-            renderVotersTable(filtered);
+        function filterMissingMobile() {
+            renderVotersTable(v => !v.mobile);
+            showToast("మొబైల్ నెంబర్ లేని ఓటర్ల జాబితా ఫిల్టర్ చేయబడింది", "info");
         }
 
-        function getFamilyGroups() {
-            const groups = {};
-            voters.forEach(v => {
-                let fKey = v.familyHeadPhone && !v.familyHeadPhone.startsWith('NoGroup_') ? v.familyHeadPhone : 'NoGroup_' + v.id;
-                if(!groups[fKey]) {
-                    groups[fKey] = {
-                        familyHeadPhone: v.familyHeadPhone && !v.familyHeadPhone.startsWith('NoGroup_') ? v.familyHeadPhone : 'గ్రూప్ లేదు (Separated)',
-                        headName: v.name,
-                        ward: v.ward,
-                        houseNo: v.houseNo,
-                        members: []
-                    };
-                }
-                groups[fKey].members.push(v);
-            });
-            return groups;
+        function filterUnassignedFamily() {
+            renderVotersTable(v => !v.headMobile);
+            showToast("ఫ్యామిలీ గ్రూపింగ్ లేని ఓటర్ల జాబితా ఫిల్టర్ చేయబడింది", "info");
         }
 
-        function renderFamilyList(searchQuery = '') {
-            const groups = getFamilyGroups();
-            const container = document.getElementById('family-list-container');
+        function renderFamilyList() {
+            const query = document.getElementById('familySearchInput') ? document.getElementById('familySearchInput').value.toLowerCase() : '';
+            const container = document.getElementById('familyContainer');
             container.innerHTML = '';
 
-            const keys = Object.keys(groups);
-            document.getElementById('family-count-badge').innerText = keys.length;
-
-            let count = 0;
-            keys.forEach(key => {
-                const fam = groups[key];
-                if(searchQuery && !fam.headName.toLowerCase().includes(searchQuery.toLowerCase()) && !fam.familyHeadPhone.includes(searchQuery)) {
-                    return;
-                }
-                count++;
-                const isActive = activeSelectedFamilyPhone === key ? 'bg-indigo-50 border-indigo-500 shadow-sm' : 'bg-white hover:bg-gray-50 border-gray-200';
-
-                let fRec = familyRecords[key] || { attendanceStatus: 'Regular' };
-                let attBadge = fRec.attendanceStatus === 'Regular' ? 
-                    '<span class="text-[10px] bg-green-100 text-green-800 px-1.5 py-0.5 rounded font-bold">క్రమంగా వస్తున్నారు</span>' : 
-                    '<span class="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">ఫాలో-అప్ అవసరం</span>';
-
-                container.innerHTML += `
-                    <div onclick="selectFamily('${key}')" class="p-3 rounded-xl border ${isActive} cursor-pointer transition flex justify-between items-center">
-                        <div>
-                            <div class="font-bold text-sm text-gray-800">${fam.headName} (${fam.members.length} సభ్యులు)</div>
-                            <div class="text-xs text-gray-500">గ్రూప్ ID: ${fam.familyHeadPhone}</div>
-                            <div class="mt-1">${attBadge}</div>
-                        </div>
-                        <i class="fa-solid fa-chevron-right text-xs text-gray-400"></i>
-                    </div>
-                `;
+            const families = {};
+            votersData.forEach(v => {
+                const key = v.headMobile || v.mobile || 'అన్‌అసైన్డ్';
+                if(!families[key]) families[key] = [];
+                families[key].push(v);
             });
 
-            if(count === 0) {
-                container.innerHTML = `<div class="p-4 text-center text-gray-400 text-xs">కుటుంబాలు ఏవీ కనుగొనబడలేదు.</div>`;
+            const keys = Object.keys(families).filter(k => {
+                const fam = families[k];
+                return k.toLowerCase().includes(query) || fam.some(m => m.name.toLowerCase().includes(query) || m.house.toLowerCase().includes(query));
+            });
+
+            if(keys.length === 0) {
+                container.innerHTML = `<div class="col-span-2 p-6 text-center text-gray-400">కుటుంబ ప్రోఫార్మా వివరాలు కనుగొనబడలేదు.</div>`;
                 return;
             }
 
-            if(keys.length > 0 && !activeSelectedFamilyPhone) {
-                activeSelectedFamilyPhone = keys[0];
-                selectFamily(activeSelectedFamilyPhone);
-            } else if(activeSelectedFamilyPhone && groups[activeSelectedFamilyPhone]) {
-                selectFamily(activeSelectedFamilyPhone);
-            }
-        }
+            keys.forEach(key => {
+                const members = families[key];
+                const head = members[0];
+                const isUnassignedGroup = (key === 'అన్‌అసైన్డ్');
 
-        function filterFamilyList() {
-            const query = document.getElementById('family-search').value;
-            renderFamilyList(query);
-        }
-
-        function selectFamily(fKey) {
-            activeSelectedFamilyPhone = fKey;
-            const groups = getFamilyGroups();
-            const fam = groups[fKey];
-            const detailContainer = document.getElementById('family-detail-container');
-
-            if(!fam) return;
-
-            if(!familyRecords[fKey]) {
-                familyRecords[fKey] = { attendanceStatus: 'Regular', attendanceNotes: '', completedWorks: [], todoList: [] };
-            }
-            const fData = familyRecords[fKey];
-
-            let membersHtml = '';
-            fam.members.forEach((m, idx) => {
-                let pBadge = m.party === 'TDP-JanaSena' ? '<span class="text-amber-600 font-bold">టీడీపీ-జనసేన</span>' : (m.party === 'YCP' ? '<span class="text-blue-600 font-bold">వైసీపీ</span>' : '<span class="text-gray-600 font-bold">న్యూట్రల్</span>');
-                membersHtml += `
-                    <tr class="border-b border-gray-100 text-xs">
-                        <td class="p-2 font-bold">${idx + 1}. ${m.name}</td>
-                        <td class="p-2">${m.ward} (ఇల్లు: ${m.houseNo || '-'})</td>
-                        <td class="p-2">${m.mobile || '-'}</td>
-                        <td class="p-2">${pBadge}</td>
-                    </tr>
-                `;
-            });
-
-            detailContainer.innerHTML = `
-                <div class="space-y-6">
-                    <div class="bg-gradient-to-r from-gray-900 to-indigo-900 text-white p-5 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                let membersHtml = members.map(m => `
+                    <div class="flex items-center justify-between text-xs py-1.5 border-b border-gray-100 last:border-0">
                         <div>
-                            <h3 class="text-lg font-bold"><i class="fa-solid fa-people-roof mr-2"></i> ${fam.headName} కుటుంబం</h3>
-                            <p class="text-xs text-gray-300 mt-1">గ్రూప్ ID: <span class="text-amber-400 font-bold">${fam.familyHeadPhone}</span> | వార్డు: ${fam.ward}</p>
+                            <span class="font-bold text-gray-800">${m.name}</span>
+                            <span class="text-gray-500 ml-1">(${m.age}/${m.gender}, ${m.ward})</span>
                         </div>
-                        <span class="mt-3 sm:mt-0 bg-white/20 px-3 py-1 rounded-lg text-xs font-semibold backdrop-blur">
-                            సభ్యులు: ${fam.members.length} మంది
-                        </span>
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 py-0.5 rounded text-[11px] font-semibold ${m.party.includes('కూటమి') ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}">${m.party}</span>
+                            <button onclick="editVoter(${m.id})" class="text-amber-600 hover:text-amber-800"><i class="fa-solid fa-pen"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+
+                const div = document.createElement('div');
+                div.className = `bg-white p-5 rounded-2xl shadow-sm border ${isUnassignedGroup ? 'border-red-300 bg-red-50/10' : 'border-gray-200'} space-y-3 hover:border-amber-400 transition cursor-pointer`;
+                div.innerHTML = `
+                    <div class="flex items-center justify-between border-b pb-2" onclick="openFamilyDetails('${key}')">
+                        <div>
+                            <h4 class="font-bold text-gray-800 flex items-center">
+                                కుటుంబ మొబైల్: ${key} 
+                                ${isUnassignedGroup ? '<span class="ml-2 text-xs text-red-600 font-bold bg-red-100 px-2 py-0.5 rounded">గ్రూపింగ్ కావాలి</span>' : '<span class="ml-2 text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded font-normal"><i class="fa-solid fa-eye"></i> వివరాలు</span>'}
+                            </h4>
+                            <span class="text-xs text-gray-500">ఇంటి నెం: ${head.house} | సభ్యులు: ${members.length} | వార్డు: ${head.ward}</span>
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        ${membersHtml}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function openFamilyDetails(headMobile) {
+            const members = votersData.filter(v => (v.headMobile === headMobile || v.mobile === headMobile || headMobile === 'అన్‌అసైన్డ్'));
+            if(members.length === 0) return;
+
+            document.getElementById('activeFamilyHeadMobile').value = headMobile;
+            document.getElementById('familyModalHeader').innerText = `కుటుంబ ప్రోఫార్మా వివరాలు (మొబైల్: ${headMobile})`;
+
+            const head = members[0];
+            const welfare = head.welfare || { pensions: 'లేదు', govt: 'లేదు', personal: 'లేదు', infra: 'లేదు', futureNeeds: [] };
+            const futureNeedsList = welfare.futureNeeds && welfare.futureNeeds.length > 0 ? welfare.futureNeeds.map(n => `<span class="bg-amber-100 text-amber-800 px-2 py-1 rounded text-xs font-medium mr-1 mb-1 inline-block"><i class="fa-solid fa-star text-[10px] mr-1"></i>${n}</span>`).join('') : '<span class="text-gray-400 text-xs">అవసరాలు నమోదు కాలేదు</span>';
+
+            let membersDetailHtml = members.map(m => `
+                <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-gray-900">${m.name} <span class="text-xs text-amber-600">(${m.ward}, ఇల్లు: ${m.house}, ${m.gender})</span></div>
+                        <div class="text-xs text-gray-500">ఓటర్ ఐడీ: ${m.voterId} | వయసు: ${m.age}</div>
+                    </div>
+                    <button onclick="editVoter(${m.id})" class="px-3 py-1.5 bg-amber-600 text-white rounded-lg text-xs font-semibold shadow hover:bg-amber-700"><i class="fa-solid fa-pen-to-square mr-1"></i> ఎడిట్</button>
+                </div>
+            `).join('');
+
+            const body = document.getElementById('familyModalBody');
+            body.innerHTML = `
+                <div class="space-y-3">
+                    <h4 class="font-bold text-gray-700 text-xs uppercase tracking-wider">కుటుంబ సభ్యులు (${members.length})</h4>
+                    <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        ${membersDetailHtml}
                     </div>
 
-                    <div>
-                        <h4 class="font-bold text-gray-800 text-sm mb-2"><i class="fa-solid fa-users mr-1 text-indigo-600"></i> కుటుంబ సభ్యుల జాబితా</h4>
-                        <div class="overflow-x-auto border border-gray-200 rounded-lg">
-                            <table class="w-full text-left">
-                                <thead class="bg-gray-50 text-gray-600 text-xs border-b border-gray-200">
-                                    <tr>
-                                        <th class="p-2">పేరు</th>
-                                        <th class="p-2">వార్డు / ఇల్లు</th>
-                                        <th class="p-2">ఫోన్ నెంబర్</th>
-                                        <th class="p-2">పార్టీ మొగ్గు</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${membersHtml}
-                                </tbody>
-                            </table>
+                    <div class="bg-emerald-50 p-3.5 rounded-xl border border-emerald-200 space-y-1.5">
+                        <h4 class="font-bold text-emerald-800 text-xs uppercase"><i class="fa-solid fa-hand-holding-dollar mr-1"></i> ప్రభుత్వ / వ్యక్తిగత సంక్షేమ సహాయం</h4>
+                        <div class="text-xs text-gray-700"><b>పెన్షన్ / పథకాలు:</b> ${welfare.pensions || 'లేదు'} / ${welfare.govt || 'లేదు'}</div>
+                        <div class="text-xs text-gray-700"><b>వ్యక్తిగత సహాయం:</b> ${welfare.personal || 'లేదు'}</div>
+                        <div class="text-xs text-gray-700"><b>వార్డు ఇన్ఫ్రా:</b> ${welfare.infra || 'లేదు'}</div>
+                    </div>
+
+                    <div class="bg-amber-50 p-3.5 rounded-xl border border-amber-200 space-y-1.5">
+                        <h4 class="font-bold text-amber-800 text-xs uppercase"><i class="fa-solid fa-lightbulb mr-1"></i> భవిష్యత్తు అవసరాలు</h4>
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            ${futureNeedsList}
                         </div>
                     </div>
                 </div>
             `;
+
+            openModal('familyDetailModal');
         }
 
-        function renderWelfareTable(filteredList = null) {
-            const list = filteredList || voters;
-            const tbody = document.getElementById('welfare-table-body');
-            tbody.innerHTML = '';
+        function saveFamilyWelfareOrNeed(e) {
+            e.preventDefault();
+            const headMobile = document.getElementById('activeFamilyHeadMobile').value;
+            const type = document.getElementById('newRecordType').value;
+            const text = document.getElementById('newRecordText').value.trim();
+            if(!text) return;
 
-            document.getElementById('welfare-total-pensions').innerText = voters.filter(v => v.pension === 'Yes').length;
-            document.getElementById('welfare-new-pensions').innerText = voters.filter(v => v.appPension === 'Pending').length;
-            document.getElementById('welfare-house-sites').innerText = voters.filter(v => v.appSite === 'Pending' || v.appSite === 'Approved').length;
-            document.getElementById('welfare-housing-bills').innerText = voters.filter(v => v.appBill === 'Pending' || v.appBill === 'Approved').length;
-
-            list.forEach(v => {
-                let partyBadge = v.party === 'TDP-JanaSena' ? `<span class="text-amber-700 bg-amber-50 px-2 py-0.5 rounded text-xs font-bold">టీడీపీ-జనసేన</span>` : `<span class="text-blue-700 bg-blue-50 px-2 py-0.5 rounded text-xs font-bold">వైసీపీ</span>`;
-                let pensionInfo = v.pension === 'Yes' ? `<span class="text-green-700 font-semibold text-xs">${v.pensionType || 'పెన్షన్ అందుతోంది'}</span>` : `<span class="text-gray-400 text-xs">లేదు</span>`;
-
-                tbody.innerHTML += `
-                    <tr class="hover:bg-gray-50 transition border-b border-gray-100">
-                        <td class="p-3"><div class="font-bold text-gray-800">${v.name}</div><div class="text-xs text-blue-600">${v.mobile || '-'}</div></td>
-                        <td class="p-3"><div class="font-semibold text-gray-700">${v.ward}</div></td>
-                        <td class="p-3">${partyBadge}</td>
-                        <td class="p-3">${pensionInfo}</td>
-                        <td class="p-3 text-xs">స్థలం: ${v.appSite || 'None'}</td>
-                        <td class="p-3 text-xs">బిల్లు: ${v.appBill || 'None'}</td>
-                    </tr>
-                `;
-            });
-        }
-
-        function filterWelfare() {
-            const query = document.getElementById('welfare-search').value.toLowerCase();
-            renderWelfareTable(voters.filter(v => v.name.toLowerCase().includes(query) || (v.mobile && v.mobile.includes(query))));
-        }
-
-        function renderMigratedTable(filteredList = null) {
-            const list = filteredList || voters.filter(v => v.availability === 'NotAvailable');
-            const tbody = document.getElementById('migrated-table-body');
-            tbody.innerHTML = '';
-
-            document.getElementById('migrated-count-badge').innerText = voters.filter(v => v.availability === 'NotAvailable').length;
-            document.getElementById('migrated-tdp-count').innerText = voters.filter(v => v.availability === 'NotAvailable' && v.party === 'TDP-JanaSena').length;
-            document.getElementById('migrated-ycp-count').innerText = voters.filter(v => v.availability === 'NotAvailable' && v.party === 'YCP').length;
-            document.getElementById('migrated-neutral-count').innerText = voters.filter(v => v.availability === 'NotAvailable' && v.party === 'Neutral').length;
-
-            list.forEach(v => {
-                tbody.innerHTML += `
-                    <tr class="hover:bg-gray-50 transition border-b border-gray-100">
-                        <td class="p-3"><div class="font-bold text-gray-800">${v.name}</div></td>
-                        <td class="p-3 font-semibold text-gray-700">${v.ward}</td>
-                        <td class="p-3">${v.party}</td>
-                        <td class="p-3 font-bold text-purple-700">${v.city || 'తెలియదు'}</td>
-                        <td class="p-3 text-xs text-gray-600">${v.followup || '-'}</td>
-                        <td class="p-3 text-center"><button onclick="editVoter('${v.id}')" class="bg-purple-50 text-purple-700 px-3 py-1.5 rounded-lg text-xs font-bold">అప్‌డేట్</button></td>
-                    </tr>
-                `;
-            });
-        }
-
-        function filterMigrated() {
-            const query = document.getElementById('migrated-search').value.toLowerCase();
-            renderMigratedTable(voters.filter(v => v.availability === 'NotAvailable' && v.name.toLowerCase().includes(query)));
-        }
-
-        function openAddVoterModal(id = null) {
-            document.getElementById('voter-modal').classList.remove('hidden');
-            if(id) {
-                document.getElementById('modal-title').innerHTML = `<i class="fa-solid fa-user-pen mr-2"></i> ఓటరు వివరాలు సవరించు`;
-                const v = voters.find(item => item.id === id);
-                if(v) {
-                    document.getElementById('voter-id').value = v.id;
-                    document.getElementById('form-name').value = v.name;
-                    document.getElementById('form-guardian').value = v.guardian || '';
-                    document.getElementById('form-voterid').value = v.voterId || '';
-                    document.getElementById('form-ward').value = v.ward;
-                    document.getElementById('form-houseno').value = v.houseNo || '';
-                    document.getElementById('form-mobile').value = v.mobile || '';
-                    document.getElementById('form-familyhead').value = (v.familyHeadPhone && !v.familyHeadPhone.startsWith('NoGroup_')) ? v.familyHeadPhone : '';
-                    document.getElementById('form-party').value = v.party;
-                    document.getElementById('form-availability').value = v.availability;
-                    document.getElementById('form-city').value = v.city || '';
-                    document.getElementById('form-followup').value = v.followup || '';
-                    document.getElementById('form-pension').value = v.pension;
-                    document.getElementById('form-pension-type').value = v.pensionType || '';
-                    toggleMigrationFields();
-                    togglePensionDetails();
+            votersData.forEach(v => {
+                if(v.headMobile === headMobile || v.mobile === headMobile || headMobile === 'అన్‌అసైన్డ్') {
+                    if(!v.welfare) v.welfare = { pensions: '', govt: '', personal: '', infra: '', futureNeeds: [] };
+                    if(type === 'scheme') v.welfare.pensions = text;
+                    else if(type === 'futureNeed') {
+                        if(!v.welfare.futureNeeds) v.welfare.futureNeeds = [];
+                        v.welfare.futureNeeds.push(text);
+                    }
+                    else if(type === 'personalHelp') v.welfare.personal = text;
+                    else if(type === 'wardInfra') v.welfare.infra = text;
+                    
+                    updateVoterToGoogleSheet(v);
                 }
-            } else {
-                document.getElementById('modal-title').innerHTML = `<i class="fa-solid fa-user-plus mr-2"></i> కొత్త ఓటరు వివరాలు చేర్చు`;
-                document.getElementById('voter-form').reset();
-                document.getElementById('voter-id').value = '';
-                toggleMigrationFields();
-                togglePensionDetails();
+            });
+
+            document.getElementById('newRecordText').value = '';
+            showToast("సవివరమైన డేటా విజయవంతంగా సేవ్ చేయబడింది!", "success");
+            openFamilyDetails(headMobile);
+            renderFamilyList();
+        }
+
+        function renderWelfareTable() {
+            const schemeFilter = document.getElementById('welfareSchemeFilter').value.toLowerCase();
+            const tbody = document.getElementById('welfareTableBody');
+            tbody.innerHTML = '';
+
+            const filtered = votersData.filter(v => {
+                if(!schemeFilter) return true;
+                const p = (v.welfare?.pensions || '').toLowerCase();
+                const g = (v.welfare?.govt || '').toLowerCase();
+                const needs = (v.welfare?.futureNeeds || []).join(' ').toLowerCase();
+                return p.includes(schemeFilter) || g.includes(schemeFilter) || needs.includes(schemeFilter);
+            });
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-400">సంక్షేమ పథకాల వివరాలు కనుగొనబడలేదు.</td></tr>`;
+                return;
             }
+
+            filtered.forEach(v => {
+                const needsHtml = (v.welfare?.futureNeeds || []).map(n => `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[11px] font-semibold mr-1 mb-1 inline-block">${n}</span>`).join('') || '<span class="text-gray-400 text-xs">రిక్వెస్ట్‌లు లేవు</span>';
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition border-b border-gray-100";
+                tr.innerHTML = `
+                    <td class="p-3.5 font-bold text-gray-800">
+                        ${v.name} <span class="text-xs text-gray-500 font-normal">(${v.gender})</span>
+                        <div class="text-xs text-amber-600 font-mono font-normal">ఓటర్ ఐడీ: ${v.voterId}</div>
+                    </td>
+                    <td class="p-3.5 text-xs">${v.ward}<br>ఇల్లు: ${v.house}</td>
+                    <td class="p-3.5 text-xs text-emerald-700 font-semibold">${v.welfare?.pensions || 'లేదు'} / ${v.welfare?.govt || 'లేదు'}</td>
+                    <td class="p-3.5 text-xs">${needsHtml}</td>
+                    <td class="p-3.5 text-xs text-gray-700">${v.welfare?.personal || 'సహాయం లేదు'} | ${v.welfare?.infra || ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
-        function closeAddVoterModal() {
-            document.getElementById('voter-modal').classList.add('hidden');
+        function renderMigratedTable() {
+            const cityFilter = document.getElementById('filterMigrantCity') ? document.getElementById('filterMigrantCity').value : '';
+            const tbody = document.getElementById('migratedTableBody');
+            tbody.innerHTML = '';
+
+            const migrated = votersData.filter(v => !isDeathOrRefusal(v) && (v.availability.includes('ప్రవాస') || v.migrantPlace));
+            const filtered = migrated.filter(v => !cityFilter || (v.migrantPlace && v.migrantPlace.toLowerCase().includes(cityFilter.toLowerCase())));
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-400">ఎంపిక చేసిన నగరంలో ప్రవాస ఓటర్ల వివరాలు కనుగొనబడలేదు.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(v => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition border-b border-gray-100";
+                tr.innerHTML = `
+                    <td class="p-3.5 font-bold text-gray-800">${v.name} <span class="text-xs text-gray-500 font-normal">(${v.gender})</span><br><span class="text-xs text-gray-400 font-normal">ఓటర్ ఐడీ: ${v.voterId}</span></td>
+                    <td class="p-3.5 text-xs">${v.ward} (ఇల్లు: ${v.house})</td>
+                    <td class="p-3.5 text-xs font-semibold text-indigo-700"><i class="fa-solid fa-location-dot mr-1"></i>${v.migrantPlace || 'హైదరాబాద్ / ఇతర'}</td>
+                    <td class="p-3.5 text-xs">${v.party}</td>
+                    <td class="p-3.5 text-xs">
+                        <div><i class="fa-solid fa-phone text-gray-400 mr-1"></i>${v.mobile || 'లేదు'}</div>
+                        <div class="text-gray-500 mt-0.5">హెడ్: ${v.headMobile || 'లేదు'}</div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
-        function toggleMigrationFields() {
-            const avail = document.getElementById('form-availability').value;
-            const migrationBox = document.getElementById('migration-box');
-            if(avail === 'NotAvailable') migrationBox.classList.remove('hidden');
-            else migrationBox.classList.add('hidden');
+        function exportMigratedExcel() {
+            const cityFilter = document.getElementById('filterMigrantCity') ? document.getElementById('filterMigrantCity').value : '';
+            const migrated = votersData.filter(v => !isDeathOrRefusal(v) && (v.availability.includes('ప్రవాస') || v.migrantPlace));
+            const filtered = migrated.filter(v => !cityFilter || (v.migrantPlace && v.migrantPlace.toLowerCase().includes(cityFilter.toLowerCase())));
+
+            const exportRows = filtered.map(v => ({
+                VoterName: v.name,
+                Gender: v.gender,
+                Ward: v.ward,
+                Booth: v.booth,
+                HouseNo: v.house,
+                MigrantCity: v.migrantPlace || 'ఇతర ప్రాంతం',
+                SupportParty: v.party,
+                Mobile: v.mobile,
+                FamilyHeadMobile: v.headMobile
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(exportRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "MigratedVoters");
+            XLSX.writeFile(wb, `Booragam_Migrated_Voters_${cityFilter || 'All'}.xlsx`);
+            showToast("ప్రవాస ఓటర్ల ఎక్సెల్ రిపోర్ట్ డౌన్‌లోడ్ చేయబడింది!", "success");
         }
 
-        function togglePensionDetails() {
-            const hasPension = document.getElementById('form-pension').value;
-            const pensionBox = document.getElementById('pension-type-box');
-            if(hasPension === 'Yes') pensionBox.classList.remove('hidden');
-            else pensionBox.classList.add('hidden');
+        function checkDuplicateVoters() {
+            const nameMap = {};
+            votersData.forEach(v => {
+                const clean = v.name.trim().toLowerCase();
+                if(!nameMap[clean]) nameMap[clean] = [];
+                nameMap[clean].push(v);
+            });
+
+            const dupes = Object.keys(nameMap).filter(n => nameMap[n].length > 1);
+            const container = document.getElementById('duplicateResultsContainer');
+            container.innerHTML = '';
+
+            if(dupes.length === 0) {
+                container.innerHTML = `<div class="p-4 text-center text-gray-500">ఒకే పేరుతో డూప్లికేట్ ఓట్లు ఏమీ కనుగొనబడలేదు.</div>`;
+            } else {
+                dupes.forEach(name => {
+                    const list = nameMap[name];
+                    const div = document.createElement('div');
+                    div.className = "bg-amber-50 p-3.5 rounded-xl border border-amber-200 space-y-1";
+                    div.innerHTML = `<div class="font-bold text-amber-900 capitalize">పేరు: ${name}</div>`;
+                    list.forEach(item => {
+                        div.innerHTML += `<div class="text-xs text-amber-800">ఐడీ: ${item.voterId} | ఇల్లు: ${item.house} | వార్డు: ${item.ward} | లింగం: ${item.gender}</div>`;
+                    });
+                    container.appendChild(div);
+                });
+            }
+            openModal('duplicateModal');
         }
 
         function saveVoter(e) {
             e.preventDefault();
-            const id = document.getElementById('voter-id').value;
-            let familyHeadVal = document.getElementById('form-familyhead').value.trim();
-            if(!familyHeadVal) {
-                familyHeadVal = 'NoGroup_' + (id || Date.now().toString());
-            }
-
-            const voterObj = {
-                id: id || Date.now().toString(),
-                name: document.getElementById('form-name').value,
-                guardian: document.getElementById('form-guardian').value,
-                voterId: document.getElementById('form-voterid').value,
-                ward: document.getElementById('form-ward').value,
-                houseNo: document.getElementById('form-houseno').value,
-                mobile: document.getElementById('form-mobile').value,
-                familyHeadPhone: familyHeadVal,
-                party: document.getElementById('form-party').value,
-                availability: document.getElementById('form-availability').value,
-                city: document.getElementById('form-city').value,
-                followup: document.getElementById('form-followup').value,
-                pension: document.getElementById('form-pension').value,
-                pensionType: document.getElementById('form-pension-type').value,
-                appPension: 'None',
-                appSite: 'None',
-                appBill: 'None'
+            const editId = document.getElementById('editVoterId').value;
+            const obj = {
+                id: editId ? Number(editId) : Date.now(),
+                serial: document.getElementById('fSerial').value,
+                voterId: document.getElementById('fVoterId').value,
+                name: document.getElementById('fName').value,
+                guardian: document.getElementById('fGuardian').value,
+                aadhaar: document.getElementById('fAadhaar').value,
+                house: document.getElementById('fHouse').value,
+                age: Number(document.getElementById('fAge').value),
+                gender: document.getElementById('fGender').value,
+                ward: document.getElementById('fWard').value,
+                booth: document.getElementById('fBooth').value,
+                party: document.getElementById('fParty').value,
+                availability: document.getElementById('fAvailability').value,
+                mobile: document.getElementById('fMobile').value,
+                headMobile: document.getElementById('fHeadMobile').value,
+                welfare: { pensions: 'నమోదు చేయాలి', govt: 'పథకాలు', personal: 'సహాయం', infra: 'సరే', futureNeeds: [] },
+                migrantPlace: document.getElementById('fAvailability').value.includes('ప్రవాస') ? 'హైదరాబాద్' : ''
             };
 
-            if(id) {
-                const index = voters.findIndex(v => v.id === id);
-                if(index !== -1) voters[index] = voterObj;
-                showToast("ఓటరు వివరాలు సవరించబడ్డాయి!");
+            if(editId) {
+                const idx = votersData.findIndex(v => v.id === Number(editId));
+                if(idx !== -1) {
+                    obj.welfare = votersData[idx].welfare;
+                    votersData[idx] = obj;
+                }
+                showToast("ఓటర్ వివరాలు విజయవంతంగా అప్‌డేట్ చేయబడ్డాయి!", "success");
             } else {
-                voters.unshift(voterObj);
-                showToast("కొత్త ఓటరు జోడించబడ్డారు!");
+                votersData.unshift(obj);
+                showToast("కొత్త ఓటర్ విజయవంతంగా చేర్చబడ్డారు!", "success");
             }
 
-            saveToLocalStorage();
-            syncToGoogleSheet();
-            closeAddVoterModal();
-            updateDashboard();
-            renderVotersTable();
-            renderWelfareTable();
-            renderMigratedTable();
-            populateIVRDropdown();
-            renderFamilyList();
+            updateVoterToGoogleSheet(obj);
+            closeModal('addVoterModal');
+            initApp();
         }
 
-        function editVoter(id) { openAddVoterModal(id); }
+        function editVoter(id) {
+            const v = votersData.find(item => item.id === id);
+            if(!v) return;
+
+            document.getElementById('editVoterId').value = v.id;
+            document.getElementById('fSerial').value = v.serial;
+            document.getElementById('fVoterId').value = v.voterId;
+            document.getElementById('fName').value = v.name;
+            document.getElementById('fGuardian').value = v.guardian;
+            document.getElementById('fAadhaar').value = v.aadhaar || '';
+            document.getElementById('fHouse').value = v.house;
+            document.getElementById('fAge').value = v.age;
+            document.getElementById('fGender').value = v.gender;
+            document.getElementById('fWard').value = v.ward;
+            document.getElementById('fBooth').value = v.booth || '';
+            document.getElementById('fParty').value = v.party;
+            document.getElementById('fAvailability').value = v.availability;
+            document.getElementById('fMobile').value = v.mobile;
+            document.getElementById('fHeadMobile').value = v.headMobile;
+
+            document.getElementById('voterModalTitle').innerText = "ఓటర్ ప్రొఫైల్ ఎడిట్ చేయండి";
+            openModal('addVoterModal');
+        }
 
         function deleteVoter(id) {
-            if(confirm("మీరు ఈ ఓటరు వివరాలను తొలగించాలనుకుంటున్నారా?")) {
-                voters = voters.filter(v => v.id !== id);
-                saveToLocalStorage();
-                syncToGoogleSheet();
-                updateDashboard();
-                renderVotersTable();
-                renderWelfareTable();
-                renderMigratedTable();
-                populateIVRDropdown();
-                renderFamilyList();
-                showToast("తొలగించబడింది!");
+            if(confirm("ఈ ఓటర్ రికార్డ్‌ను తొలగించాలనుకుంటున్నారా?")) {
+                votersData = votersData.filter(v => v.id !== id);
+                initApp();
+                showToast("ఓటర్ రికార్డ్ తొలగించబడింది", "info");
             }
         }
 
-        function populateIVRDropdown() {
-            const select = document.getElementById('ivr-voter-select');
-            select.innerHTML = '';
-            voters.forEach(v => {
-                select.innerHTML += `<option value="${v.id}">${v.name} (${v.mobile || 'నెంబర్ లేదు'}) - ${v.ward}</option>`;
-            });
-        }
-
-        function triggerSingleIVR() {
-            const voterId = document.getElementById('ivr-voter-select').value;
-            const responseParty = document.getElementById('ivr-response-select').value;
-            const voter = voters.find(v => v.id === voterId);
-            if(!voter) return;
-
-            if(responseParty !== 'Disconnected') {
-                voter.party = responseParty;
-                saveToLocalStorage();
-                syncToGoogleSheet();
-                updateDashboard();
-                renderVotersTable();
-                renderFamilyList();
+        function saveNewWard(e) {
+            e.preventDefault();
+            const name = document.getElementById('newWardName').value.trim();
+            if(name && !wardsList.includes(name)) {
+                wardsList.push(name);
+                closeModal('addWardModal');
+                initApp();
+                showToast("కొత్త వార్డు విజయవంతంగా జోడించబడింది", "success");
             }
-
-            ivrLogs.unshift({
-                time: new Date().toLocaleTimeString(),
-                name: voter.name,
-                mobile: voter.mobile || '-',
-                response: responseParty,
-                updated: responseParty !== 'Disconnected' ? 'అప్‌డేట్ చేయబడింది' : 'నో ఛేంజ్'
-            });
-            renderIVRLogs();
-            showToast("IVR కాల్ పూర్తయింది!");
         }
 
-        function simulateBatchIVR() {
-            if(voters.length === 0) return;
-            const randomVoter = voters[Math.floor(Math.random() * voters.length)];
-            const parties = ['TDP-JanaSena', 'YCP', 'Neutral'];
-            randomVoter.party = parties[Math.floor(Math.random() * parties.length)];
-            saveToLocalStorage();
-            syncToGoogleSheet();
-            updateDashboard();
-            renderVotersTable();
-            renderFamilyList();
-            showToast("ఆటోమేటెడ్ IVR బ్యాచ్ కాల్ రన్ అయింది!");
+        function triggerExcelImport() {
+            document.getElementById('excelFileInput').click();
         }
 
-        function renderIVRLogs() {
-            const tbody = document.getElementById('ivr-logs-body');
-            tbody.innerHTML = '';
-            ivrLogs.forEach(log => {
-                tbody.innerHTML += `
-                    <tr class="hover:bg-gray-50 border-b border-gray-100">
-                        <td class="p-2.5 text-gray-500">${log.time}</td>
-                        <td class="p-2.5 font-bold">${log.name}</td>
-                        <td class="p-2.5 text-blue-600">${log.mobile}</td>
-                        <td class="p-2.5 font-semibold">${log.response}</td>
-                        <td class="p-2.5 text-green-700">${log.updated}</td>
-                    </tr>
-                `;
-            });
+        function handleExcelUpload(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const wb = XLSX.read(data, { type: 'array' });
+                    const sheet = wb.Sheets[wb.SheetNames[0]];
+                    const json = XLSX.utils.sheet_to_json(sheet);
+
+                    if(json.length > 0) {
+                        votersData = json.map((row, idx) => ({
+                            id: votersData.length + idx + 1,
+                            serial: String(row.SerialNo || (idx + 1)),
+                            voterId: String(row.VoterID || 'TEL' + idx),
+                            name: String(row.Name || 'పేరు లేదు'),
+                            guardian: String(row.FatherName || ''),
+                            aadhaar: String(row.Aadhaar || ''),
+                            house: String(row.HouseNo || '1-1'),
+                            age: Number(row.Age || 30),
+                            gender: String(row.Gender || 'పురుషులు'),
+                            ward: String(row.Ward || 'వార్డు 1'),
+                            booth: String(row.Booth || '1'),
+                            party: String(row.SupportParty || 'సర్వే కాలేదు'),
+                            availability: String(row.Availability || 'అందుబాటులో ఉన్నారు'),
+                            mobile: String(row.Mobile || ''),
+                            headMobile: String(row.FamilyHeadMobile || ''),
+                            welfare: { pensions: 'నమోదు చేయాలి', govt: 'పథకాలు', personal: 'సహాయం', infra: 'సరే', futureNeeds: [] },
+                            migrantPlace: ''
+                        }));
+                        initApp();
+                        showToast(`ఎక్సెల్ నుండి ${json.length} ఓటర్ల డేటా విజయవంతంగా లోడ్ చేయబడింది!`, "success");
+                    }
+                } catch(err) {
+                    console.error(err);
+                    showToast("ఎక్సెల్ ఫైల్ చదవడం లో లోపం ఏర్పడింది.", "error");
+                }
+            };
+            reader.readAsArrayBuffer(file);
         }
 
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-message').innerText = message;
-            toast.classList.remove('translate-y-20', 'opacity-0');
+        function exportToExcel() {
+            const exportRows = votersData.map(v => ({
+                SerialNo: v.serial,
+                VoterID: v.voterId,
+                VoterName: v.name,
+                Gender: v.gender,
+                Ward: v.ward,
+                Booth: v.booth,
+                FatherName: v.guardian,
+                Aadhaar: v.aadhaar,
+                HouseNo: v.house,
+                Age: v.age,
+                SupportParty: v.party,
+                Availability: v.availability,
+                Mobile: v.mobile,
+                FamilyHeadMobile: v.headMobile
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(exportRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "BooragamVoters");
+            XLSX.writeFile(wb, "Booragam_Panchayat_Election_Survey.xlsx");
+            showToast("పూర్తి డేటాబేస్ ఎక్సెల్ ఫైల్‌గా డౌన్‌లోడ్ చేయబడింది!", "success");
+        }
+
+        function openModal(id) {
+            if(id === 'addVoterModal' && !document.getElementById('editVoterId').value) {
+                document.getElementById('voterForm').reset();
+                document.getElementById('editVoterId').value = '';
+                document.getElementById('voterModalTitle').innerText = "కొత్త ఓటర్ ప్రొఫైల్ ఎంట్రీ";
+            }
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function showToast(text, type = 'success') {
+            const box = document.getElementById('toastBox');
+            const txt = document.getElementById('toastText');
+            txt.innerText = text;
+            box.classList.remove('translate-y-20', 'opacity-0');
             setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0');
+                box.classList.add('translate-y-20', 'opacity-0');
             }, 3500);
         }
+
+        window.onload = function() {
+            initApp();
+        };
     </script>
 </body>
 </html>
